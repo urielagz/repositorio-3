@@ -157,23 +157,19 @@ export class PublicacionController {
             // plataforma).
             if (idMateria !== undefined && usuario.rol !== "alumno") {
 
-                try {
-
-                    const alumnos = await RepositorioMaterias.obtenerAlumnosInscritos(idMateria);
-
-                    await Promise.all(alumnos.map(alumno => enviarCorreo(
+                // Best-effort: no se espera, para que un SMTP lento/colgado
+                // no tumbe la respuesta de la publicación ya creada.
+                RepositorioMaterias.obtenerAlumnosInscritos(idMateria)
+                    .then(alumnos => Promise.all(alumnos.map(alumno => enviarCorreo(
                         alumno.correo,
                         `Nueva publicación: "${titulo}" - Miztontli`,
                         `<p>Hola ${alumno.nombre}, tu docente publicó algo nuevo en tu materia.</p>
                          <p><strong>${titulo}</strong></p>
                          <p>${contenido ?? ""}</p>`
-                    )));
-
-                } catch (errorCorreo) {
-
-                    console.error("No se pudieron enviar los correos de la publicación:", errorCorreo);
-
-                }
+                    ))))
+                    .catch(errorCorreo => {
+                        console.error("No se pudieron enviar los correos de la publicación:", errorCorreo);
+                    });
 
             }
 

@@ -211,29 +211,23 @@ class MateriaController {
             }
 
             // El docente recibe el token de inscripción por correo -- es
-            // best-effort: si el envío falla, la materia ya quedó creada
-            // y no debe tumbar la respuesta.
-            try {
+            // best-effort: no se espera (el SMTP puede tardar o colgarse),
+            // así que corre en paralelo y nunca retrasa ni tumba la respuesta.
+            repos.usuarios.buscarPorId(Number(id_docente))
+                .then(docente => {
+                    if (!docente) return;
 
-                const docente = await repos.usuarios.buscarPorId(Number(id_docente));
-
-                if (docente) {
-
-                    await enviarCorreo(
+                    return enviarCorreo(
                         docente.correo,
                         `Token de inscripción para "${materia.nombre}" - Miztontli`,
                         `<p>Hola ${docente.nombre}, creaste la materia <strong>${materia.nombre}</strong>.</p>
                          <p>Comparte este token con tus alumnos para que se inscriban:</p>
                          <p style="font-size:20px;"><strong>${materia.token}</strong></p>`
                     );
-
-                }
-
-            } catch (errorCorreo) {
-
-                console.error("No se pudo enviar el correo del token de materia:", errorCorreo);
-
-            }
+                })
+                .catch(errorCorreo => {
+                    console.error("No se pudo enviar el correo del token de materia:", errorCorreo);
+                });
 
             return res.status(201).json({
 
@@ -610,13 +604,17 @@ class MateriaController {
 
             await notificarMateria(id, "aviso", titulo, mensaje);
 
-            await correoMateria(
+            // El correo masivo a los inscritos es best-effort: no se espera,
+            // para que un SMTP lento/colgado no tumbe la respuesta.
+            correoMateria(
                 id,
                 `Aviso importante: ${titulo} - Miztontli`,
                 (alumno) => `<p>Hola ${alumno.nombre}, tu docente envió un aviso importante en "${materia.nombre}".</p>
                              <p><strong>${titulo}</strong></p>
                              <p>${mensaje}</p>`
-            );
+            ).catch(errorCorreo => {
+                console.error("No se pudo enviar el correo del aviso:", errorCorreo);
+            });
 
             return res.status(201).json({
                 ok: true,
