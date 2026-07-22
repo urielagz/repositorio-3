@@ -78,11 +78,11 @@ async function enviarFormulario(event) {
 
             setTimeout(() => {
                 if (rolUsuario === "alumno") {
-                    window.location.href = "panel-alumno.html";
+                    window.location.href = "html/panel-alumno.html";
                 } else if (rolUsuario === "docente" || rolUsuario === "admin") {
-                    window.location.href = "panel.html"; // Panel con navbar (Materias/Comunidad/Perfil), en /html
+                    window.location.href = "html/panel.html"; // Panel con navbar (Materias/Comunidad/Perfil), en /html
                 } else {
-                    window.location.href = "dashboard-general.html";
+                    window.location.href = "html/dashboard-general.html";
                 }
             }, 1500);
 
