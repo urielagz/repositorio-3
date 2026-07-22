@@ -12,6 +12,24 @@ let chatsInicializados = false;
 let intervaloChat = null;
 let mensajeRespondiendo = null; // { autor, fragmento }
 let archivosPendientes = []; // File[]
+let socket = null;
+
+// Empuja los mensajes nuevos en vivo (Socket.IO) al chat activo, en vez de
+// esperar el siguiente ciclo de polling (hasta INTERVALO_POLLING_MS).
+function inicializarSocketChat(token) {
+    socket = io(API_URL, { auth: { token } });
+
+    socket.on("chat:mensaje", (msg) => {
+        if (Number(msg.id_grupo) !== Number(chatActivoId)) return;
+
+        const contenedor = document.getElementById("chatMensajes");
+        const vacio = contenedor.querySelector(".chat-vacio");
+        if (vacio) vacio.remove();
+
+        contenedor.appendChild(crearBurbujaMensaje(msg));
+        contenedor.scrollTop = contenedor.scrollHeight;
+    });
+}
 
 // El backend responde HTML (404 de Express) cuando una ruta no existe;
 // sin esto, .json() falla con "Unexpected token '<'" en vez de decir qué ruta falta.
@@ -39,6 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
     usuarioActual = user;
     document.getElementById("userDisplay").innerText = `${user.nombre} ${user.apellido}`;
 
+    inicializarSocketChat(token);
     inicializarTabs();
     inicializarFormulariosChat();
 });
@@ -143,8 +162,14 @@ function renderizarListaChats(lista, grupos, mensajeVacio) {
 }
 
 function seleccionarChat(grupo) {
+    if (socket && chatActivoId && Number(chatActivoId) !== Number(grupo.id_grupo)) {
+        socket.emit("chat:salir", chatActivoId);
+    }
+
     chatActivoId = grupo.id_grupo;
     chatActivoNombre = grupo.nombre;
+
+    if (socket) socket.emit("chat:unirse", chatActivoId);
     document.getElementById("chatActivoNombre").textContent = grupo.nombre;
 
     document.querySelectorAll(".chat-sidebar-list li").forEach(li => {

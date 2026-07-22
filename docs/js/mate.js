@@ -637,6 +637,13 @@ async function crearMateria(event) {
     event.preventDefault();
     const nombre = document.getElementById("matNombre").value.trim();
     if (!nombre) return;
+
+    // Deshabilita el botón mientras la petición está en curso -- sin esto,
+    // varios clics seguidos (o Enter repetido) antes de que responda el
+    // backend crean varias materias idénticas.
+    const boton = event.target.querySelector('button[type="submit"]');
+    if (boton) boton.disabled = true;
+
     try {
         const token = localStorage.getItem("token");
         const respuesta = await fetch(`${API_URL}/materias`, {
@@ -655,6 +662,8 @@ async function crearMateria(event) {
     } catch (error) {
         console.error("Error al crear materia:", error);
         alert(error.message);
+    } finally {
+        if (boton) boton.disabled = false;
     }
 }
 
@@ -664,6 +673,10 @@ async function crearTema(event) {
     const nombre = document.getElementById("temaNombre").value.trim();
     const descripcion = document.getElementById("temaDescripcion").value.trim();
     if (!nombre) return;
+
+    const boton = event.target.querySelector('button[type="submit"]');
+    if (boton) boton.disabled = true;
+
     try {
         const token = localStorage.getItem("token");
         const respuesta = await fetch(`${API_URL}/temas`, {
@@ -679,6 +692,8 @@ async function crearTema(event) {
     } catch (error) {
         console.error("Error al crear tema:", error);
         alert(error.message);
+    } finally {
+        if (boton) boton.disabled = false;
     }
 }
 
@@ -690,6 +705,10 @@ async function crearExamen(event) {
     const descripcion = document.getElementById("exDescripcion").value.trim();
     const fechaLimite = document.getElementById("exFecha").value;
     if (!titulo || !urlFormulario) return;
+
+    const boton = event.target.querySelector('button[type="submit"]');
+    if (boton) boton.disabled = true;
+
     try {
         const token = localStorage.getItem("token");
         const cuerpo = { titulo, url_formulario: urlFormulario, descripcion, id_tema: Number(idTemaModalActual) };
@@ -707,6 +726,8 @@ async function crearExamen(event) {
     } catch (error) {
         console.error("Error al crear examen:", error);
         alert(error.message);
+    } finally {
+        if (boton) boton.disabled = false;
     }
 }
 
@@ -715,6 +736,10 @@ async function crearActividad(event) {
     if (!idTemaModalActual) return;
     const titulo = document.getElementById("actTitulo").value.trim();
     if (!titulo) return;
+
+    const boton = event.target.querySelector('button[type="submit"]');
+    if (boton) boton.disabled = true;
+
     try {
         const token = localStorage.getItem("token");
         const formData = new FormData();
@@ -743,5 +768,7 @@ async function crearActividad(event) {
     } catch (error) {
         console.error("Error al crear actividad:", error);
         alert(error.message);
+    } finally {
+        if (boton) boton.disabled = false;
     }
 }
