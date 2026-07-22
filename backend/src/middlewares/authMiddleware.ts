@@ -29,7 +29,7 @@ export const authMiddleware = (
 
         const payload = jwt.verify(
             token,
-            "SECRETO_SUPER_SECRETO"
+            process.env.JWT_SECRET || "SECRETO_SUPER_SECRETO"
         );
 
         (req as any).usuario = payload as any;

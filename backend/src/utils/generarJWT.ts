@@ -10,7 +10,7 @@ export const generarJWT = (
             id,
             rol
         },
-        "SECRETO_SUPER_SECRETO",
+        process.env.JWT_SECRET || "SECRETO_SUPER_SECRETO",
         {
             expiresIn: "2h"
         }

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miztontli - Panel del Docente</title>
+    <link rel="stylesheet" href="../css/mater.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo">Miztontli <span>Docente</span></div>
+        <div class="user-profile" id="userDisplay">Cargando usuario...</div>
+    </header>
+
+    <div class="dashboard-container">
+        <!-- Sidebar: Lista de Materias -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h3>Mis Materias</h3>
+                <button id="btnNuevaMateria" class="btn-icon" title="Crear Materia">+</button>
+            </div>
+            <ul id="listaMaterias" class="nav-list">
+                <!-- Se inyecta dinámicamente -->
+            </ul>
+        </aside>
+
+        <!-- Contenido Principal -->
+        <main class="main-content" id="mainContent">
+            <div class="welcome-screen">
+                <h2>¡Bienvenido al Panel de Gestión Académica!</h2>
+                <p>Selecciona una materia de la barra lateral o crea una nueva para comenzar a estructurar tus temas, teoría y evaluaciones.</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modales para Creación -->
+    <!-- Modal Materia -->
+    <div id="modalMateria" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Nueva Materia</h3>
+            <form id="formMateria">
+                <div class="form-group">
+                    <label for="matNombre">Nombre de la Materia:</label>
+                    <input type="text" id="matNombre" required placeholder="Ej. Cálculo Integral">
+                </div>
+                <div class="form-group">
+                    <label for="matCodigo">Código:</label>
+                    <input type="text" id="matCodigo" required placeholder="Ej. CAL-101">
+                </div>
+                <button type="submit" class="btn-primary">Guardar Materia</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Editar Materia -->
+    <div id="modalEditarMateria" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Editar Materia</h3>
+            <form id="formEditarMateria">
+                <div class="form-group">
+                    <label for="editMatNombre">Nombre de la Materia:</label>
+                    <input type="text" id="editMatNombre" placeholder="Ej. Cálculo Integral">
+                </div>
+                <div class="form-group">
+                    <label for="editMatColor">Color:</label>
+                    <input type="color" id="editMatColor">
+                </div>
+                <div class="form-group">
+                    <label for="editMatOrden">Orden:</label>
+                    <input type="number" id="editMatOrden" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="editMatIcono">Ícono (opcional):</label>
+                    <input type="file" id="editMatIcono" accept="image/*">
+                </div>
+                <button type="submit" class="btn-primary">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Tema -->
+    <div id="modalTema" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Nuevo Tema</h3>
+            <form id="formTema">
+                <div class="form-group">
+                    <label for="temaNombre">Nombre del Tema:</label>
+                    <input type="text" id="temaNombre" required placeholder="Ej. Integración por Sustitución">
+                </div>
+                <div class="form-group">
+                    <label for="temaDescripcion">Descripción:</label>
+                    <textarea id="temaDescripcion" rows="3" placeholder="Breve descripción del tema"></textarea>
+                </div>
+                <button type="submit" class="btn-primary">Guardar Tema</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Editar Tema (metadatos) -->
+    <div id="modalEditarTema" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Editar Tema</h3>
+            <form id="formEditarTema">
+                <div class="form-group">
+                    <label for="editTemaNombre">Nombre del Tema:</label>
+                    <input type="text" id="editTemaNombre" required placeholder="Ej. Integración por Sustitución">
+                </div>
+                <div class="form-group">
+                    <label for="editTemaDescripcion">Descripción:</label>
+                    <textarea id="editTemaDescripcion" rows="3" required placeholder="Breve descripción del tema"></textarea>
+                </div>
+                <button type="submit" class="btn-primary">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Editar Contenido de Tema (lo que lee el alumno) -->
+    <div id="modalEditarContenidoTema" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Editar Contenido del Tema</h3>
+            <form id="formEditarContenidoTema" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="editContIntroduccion">Introducción:</label>
+                    <textarea id="editContIntroduccion" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editContTexto">Contenido:</label>
+                    <textarea id="editContTexto" rows="6"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editContImagen1">Imagen 1 (opcional, reemplaza la actual):</label>
+                    <input type="file" id="editContImagen1" accept="image/*">
+                </div>
+                <div class="form-group">
+                    <label for="editContImagen2">Imagen 2 (opcional, reemplaza la actual):</label>
+                    <input type="file" id="editContImagen2" accept="image/*">
+                </div>
+                <button type="submit" class="btn-primary">Guardar Contenido</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Recurso (Teoría) -->
+    <div id="modalRecurso" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Publicar Recurso (Teoría)</h3>
+            <form id="formRecurso" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="recTitulo">Título del Recurso:</label>
+                    <input type="text" id="recTitulo" required>
+                </div>
+                <div class="form-group">
+                    <label for="recDescripcion">Descripción:</label>
+                    <textarea id="recDescripcion" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="recArchivos">Adjuntar Archivos (Máx. 5):</label>
+                    <input type="file" id="recArchivos" name="archivos" multiple accept=".pdf,.doc,.docx,.png,.jpg">
+                </div>
+                <button type="submit" class="btn-primary">Subir Recurso</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Examen -->
+    <div id="modalExamen" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Crear Examen</h3>
+            <form id="formExamen">
+                <div class="form-group">
+                    <label for="exTitulo">Título del Examen:</label>
+                    <input type="text" id="exTitulo" required>
+                </div>
+                <div class="form-group">
+                    <label for="exUrlFormulario">URL del Formulario:</label>
+                    <input type="url" id="exUrlFormulario" required placeholder="https://forms.gle/...">
+                </div>
+                <div class="form-group">
+                    <label for="exDescripcion">Instrucciones:</label>
+                    <textarea id="exDescripcion" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="exFecha">Fecha Límite:</label>
+                    <input type="datetime-local" id="exFecha">
+                </div>
+                <button type="submit" class="btn-primary">Crear Examen</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Editar Examen -->
+    <div id="modalEditarExamen" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Editar Examen</h3>
+            <form id="formEditarExamen">
+                <div class="form-group">
+                    <label for="editExTitulo">Título del Examen:</label>
+                    <input type="text" id="editExTitulo" required>
+                </div>
+                <div class="form-group">
+                    <label for="editExUrlFormulario">URL del Formulario:</label>
+                    <input type="url" id="editExUrlFormulario" required placeholder="https://forms.gle/...">
+                </div>
+                <div class="form-group">
+                    <label for="editExDescripcion">Instrucciones:</label>
+                    <textarea id="editExDescripcion" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editExFecha">Fecha Límite:</label>
+                    <input type="datetime-local" id="editExFecha">
+                </div>
+                <button type="submit" class="btn-primary">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Actividad -->
+    <div id="modalActividad" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Nueva Actividad</h3>
+            <form id="formActividad" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="actTitulo">Título de la Actividad:</label>
+                    <input type="text" id="actTitulo" required>
+                </div>
+                <div class="form-group">
+                    <label for="actDescripcion">Descripción:</label>
+                    <textarea id="actDescripcion" rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="actFecha">Fecha Límite:</label>
+                        <input type="datetime-local" id="actFecha">
+                    </div>
+                    <div class="form-group">
+                        <label for="actPuntaje">Puntaje:</label>
+                        <input type="number" id="actPuntaje" min="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="actArchivos">Adjuntar Archivos (Máx. 5):</label>
+                    <input type="file" id="actArchivos" multiple accept=".pdf,.doc,.docx,.png,.jpg">
+                </div>
+                <button type="submit" class="btn-primary">Guardar Actividad</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Editar Actividad -->
+    <div id="modalEditarActividad" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Editar Actividad</h3>
+            <form id="formEditarActividad" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="editActTitulo">Título de la Actividad:</label>
+                    <input type="text" id="editActTitulo" required>
+                </div>
+                <div class="form-group">
+                    <label for="editActDescripcion">Descripción:</label>
+                    <textarea id="editActDescripcion" rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editActFecha">Fecha Límite:</label>
+                        <input type="datetime-local" id="editActFecha">
+                    </div>
+                    <div class="form-group">
+                        <label for="editActPuntaje">Puntaje:</label>
+                        <input type="number" id="editActPuntaje" min="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="editActArchivosPermitidos">Extensiones de archivo permitidas (opcional):</label>
+                    <input type="text" id="editActArchivosPermitidos" placeholder="Ej. .pdf,.doc,.docx">
+                </div>
+                <div class="form-group">
+                    <label for="editActArchivos">Agregar archivos de apoyo (se suman a los existentes):</label>
+                    <input type="file" id="editActArchivos" multiple accept=".pdf,.doc,.docx,.png,.jpg">
+                </div>
+                <button type="submit" class="btn-primary">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Token de Materia -->
+    <div id="modalToken" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Token de inscripción</h3>
+            <p id="tokenMateriaNombre" style="color: var(--text-muted); margin-bottom: 1rem;"></p>
+            <div class="form-group">
+                <label for="tokenValor">Comparte este token con tus alumnos:</label>
+                <input type="text" id="tokenValor" readonly>
+            </div>
+            <button type="button" id="btnCopiarToken" class="btn-primary">Copiar token</button>
+        </div>
+    </div>
+
+    <script src="../js/mate.js"></script>
+</body>
+</html>

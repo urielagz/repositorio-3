@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acceso al Sistema</title>
+  <link rel="stylesheet" href="../css/login.css">
+</head>
+<body>
+
+  <div class="auth-container">
+    <div class="auth-card">
+      
+      <!-- Título que cambia dinámicamente -->
+      <h2 id="auth-title">Iniciar Sesión</h2>
+      <p id="auth-subtitle">Ingresa tus credenciales para acceder</p>
+      
+      <!-- Contenedor de Alertas/Errores -->
+      <div id="auth-error" class="error-msg hidden"></div>
+      <div id="auth-success" class="success-msg hidden"></div>
+
+      <!-- Formulario Único -->
+      <form id="auth-form">
+        
+        <!-- Campos exclusivos de Registro (se muestran/ocultan con JS) -->
+        <div id="register-fields" class="hidden">
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="auth-nombre">Nombre</label>
+              <input type="text" id="auth-nombre" placeholder="Tu nombre">
+            </div>
+            <div class="form-group">
+              <label for="auth-apellido">Apellido</label>
+              <input type="text" id="auth-apellido" placeholder="Tu apellido">
+            </div>
+          </div>
+        </div>
+        
+        <!-- Campos comunes -->
+        <div class="form-group">
+          <label for="auth-correo">Correo Electrónico</label>
+          <input type="email" id="auth-correo" placeholder="ejemplo@correo.com" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="auth-contrasena">Contraseña</label>
+          <input type="password" id="auth-contrasena" placeholder="••••••••" required>
+        </div>
+        
+        <!-- Botón de acción principal -->
+        <button type="submit" class="btn-primary" id="auth-submit-btn">Ingresar</button>
+      </form>
+      
+      <!-- Enlace para alternar entre Login y Registro -->
+      <div class="auth-footer">
+        <button type="button" id="toggle-mode-btn" onclick="invertirModo()">
+          ¿No tienes cuenta? Regístrate aquí
+        </button>
+        <button type="button" id="olvide-btn">
+          ¿Olvidaste tu contraseña?
+        </button>
+        <button type="button" id="docente-btn">
+          ¿Eres docente? Solicita tu cuenta aquí
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal: Recuperar contraseña -->
+  <div id="modalOlvide" class="modal">
+    <div class="modal-content">
+      <span class="close-modal">&times;</span>
+      <h3>Recuperar contraseña</h3>
+      <div id="olvide-error" class="error-msg hidden"></div>
+      <div id="olvide-success" class="success-msg hidden"></div>
+
+      <form id="form-olvide-paso1">
+        <div class="form-group">
+          <label for="olvide-correo">Correo electrónico</label>
+          <input type="email" id="olvide-correo" required placeholder="ejemplo@correo.com">
+        </div>
+        <button type="submit" class="btn-primary">Enviar código</button>
+      </form>
+
+      <form id="form-olvide-paso2" class="hidden">
+        <div class="form-group">
+          <label for="olvide-token">Código recibido por correo</label>
+          <input type="text" id="olvide-token" required placeholder="Código">
+        </div>
+        <div class="form-group">
+          <label for="olvide-nueva">Nueva contraseña</label>
+          <input type="password" id="olvide-nueva" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn-primary">Restablecer contraseña</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Solicitud de cuenta docente -->
+  <div id="modalDocente" class="modal">
+    <div class="modal-content">
+      <span class="close-modal">&times;</span>
+      <h3>Solicitud de cuenta docente</h3>
+      <p>Sube tu cédula profesional y tu diploma. Un administrador revisará tu solicitud y te avisaremos por correo.</p>
+      <div id="docente-error" class="error-msg hidden"></div>
+      <div id="docente-success" class="success-msg hidden"></div>
+
+      <form id="form-docente">
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="docente-nombre">Nombre</label>
+            <input type="text" id="docente-nombre" required placeholder="Tu nombre">
+          </div>
+          <div class="form-group">
+            <label for="docente-apellido">Apellido</label>
+            <input type="text" id="docente-apellido" required placeholder="Tu apellido">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="docente-correo">Correo electrónico</label>
+          <input type="email" id="docente-correo" required placeholder="ejemplo@correo.com">
+        </div>
+        <div class="form-group">
+          <label for="docente-cedula">Cédula profesional (PDF o imagen)</label>
+          <input type="file" id="docente-cedula" required accept=".pdf,.png,.jpg,.jpeg">
+        </div>
+        <div class="form-group">
+          <label for="docente-diploma">Diploma (PDF o imagen)</label>
+          <input type="file" id="docente-diploma" required accept=".pdf,.png,.jpg,.jpeg">
+        </div>
+        <button type="submit" class="btn-primary">Enviar solicitud</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/login.js"></script>
+</body>
+</html>

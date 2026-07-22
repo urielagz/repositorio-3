@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miztontli - Panel del Alumno</title>
+    <link rel="stylesheet" href="../css/alumno.css">
+</head>
+<body>
+    <header class="navbar-panel">
+        <div class="logo">Miztontli <span>Alumno</span></div>
+        <nav class="tabs-nav" id="tabsNav">
+            <button type="button" class="tab-btn active" data-tab="dashboard">Dashboard</button>
+            <button type="button" class="tab-btn" data-tab="materias">Materias</button>
+            <button type="button" class="tab-btn" data-tab="chat">Chat</button>
+            <button type="button" class="tab-btn" data-tab="perfil">Perfil</button>
+        </nav>
+        <div class="user-profile" id="userDisplay">Cargando usuario...</div>
+    </header>
+
+    <main class="panel-content">
+        <!-- ===================== DASHBOARD ===================== -->
+        <section id="tab-dashboard" class="tab-panel active">
+            <div class="dashboard-grid">
+                <div class="dashboard-widget">
+                    <h3>Notificaciones</h3>
+                    <div class="dashboard-lista" id="dashboardNotificaciones">
+                        <p class="dashboard-vacio">Cargando...</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-widget">
+                    <h3>Calendario / Próximas fechas</h3>
+                    <div class="dashboard-lista" id="dashboardCalendario">
+                        <p class="dashboard-vacio">Cargando...</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-widget full">
+                    <h3>Recomendados para ti</h3>
+                    <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr;">
+                        <div>
+                            <h4 style="color:var(--text-muted); font-size:0.85rem; margin-bottom:0.5rem;"> A repasar</h4>
+                            <div class="dashboard-recomendados-sub">
+                                <h4>Temas</h4>
+                                <div class="dashboard-lista" id="repasarTemas"><p class="dashboard-vacio">Cargando...</p></div>
+                            </div>
+                            <div class="dashboard-recomendados-sub">
+                                <h4>Actividades</h4>
+                                <div class="dashboard-lista" id="repasarActividades"><p class="dashboard-vacio">Cargando...</p></div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 style="color:var(--text-muted); font-size:0.85rem; margin-bottom:0.5rem;"> Siguientes</h4>
+                            <div class="dashboard-recomendados-sub">
+                                <h4>Temas</h4>
+                                <div class="dashboard-lista" id="siguientesTemas"><p class="dashboard-vacio">Cargando...</p></div>
+                            </div>
+                            <div class="dashboard-recomendados-sub">
+                                <h4>Actividades</h4>
+                                <div class="dashboard-lista" id="siguientesActividades"><p class="dashboard-vacio">Cargando...</p></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================== MATERIAS ===================== -->
+        <section id="tab-materias" class="tab-panel">
+            <div class="materias-inscripcion">
+                <input type="text" id="inputToken" placeholder="Ingresa el token de tu materia" autocomplete="off">
+                <button type="button" id="btnUnirse" class="btn-primary">Unirse</button>
+            </div>
+            <div id="materiasContenido">
+                <p class="dashboard-vacio">Cargando tus materias...</p>
+            </div>
+        </section>
+
+        <!-- ===================== CHAT (idéntico al del docente) ===================== -->
+        <section id="tab-chat" class="tab-panel">
+            <div class="chat-shell">
+                <aside class="chat-sidebar">
+                    <div class="chat-sidebar-group">
+                        <span class="chat-sidebar-label">Chat de la Escuela</span>
+                        <ul id="listaChatsEscuela" class="chat-sidebar-list">
+                            <li class="chat-sidebar-vacio">Cargando...</li>
+                        </ul>
+                    </div>
+                    <div class="chat-sidebar-group">
+                        <span class="chat-sidebar-label">Chat Global</span>
+                        <ul id="listaChatsGlobal" class="chat-sidebar-list">
+                            <li class="chat-sidebar-vacio">Cargando...</li>
+                        </ul>
+                    </div>
+                </aside>
+
+                <section class="chat-activo">
+                    <div class="chat-activo-header">
+                        <h3 id="chatActivoNombre">Selecciona un chat</h3>
+                    </div>
+
+                    <div class="chat-mensajes" id="chatMensajes">
+                        <p class="chat-vacio">Elige un chat de la lista para comenzar.</p>
+                    </div>
+
+                    <div class="chat-reply-bar hidden" id="chatReplyBar">
+                        <div class="chat-reply-info">
+                            <strong id="chatReplyAutor"></strong>
+                            <span id="chatReplyTexto"></span>
+                        </div>
+                        <button type="button" class="chat-reply-cancelar" id="btnCancelarReply" title="Cancelar respuesta">&times;</button>
+                    </div>
+
+                    <div class="chat-adjuntos-preview hidden" id="chatAdjuntosPreview"></div>
+
+                    <form class="chat-form" id="formChatActivo">
+                        <div class="chat-attach-wrapper">
+                            <button type="button" class="chat-attach-btn" id="btnAdjuntar" title="Adjuntar"></button>
+                            <div class="chat-attach-menu hidden" id="menuAdjuntar">
+                                <button type="button" data-tipo="foto"> <span>Fotos</span></button>
+                                <button type="button" data-tipo="video"> <span>Video</span></button>
+                                <button type="button" data-tipo="documento"> <span>Documento</span></button>
+                            </div>
+                        </div>
+                        <input type="file" id="inputFoto" class="chat-file-input" accept="image/*" multiple>
+                        <input type="file" id="inputVideo" class="chat-file-input" accept="video/*" multiple>
+                        <input type="file" id="inputDocumento" class="chat-file-input" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" multiple>
+                        <input type="text" id="inputMensaje" placeholder="Escribe un mensaje..." autocomplete="off">
+                        <button type="submit" class="btn-primary">Enviar</button>
+                    </form>
+                </section>
+            </div>
+        </section>
+
+        <!-- ===================== PERFIL (idéntico al del docente) ===================== -->
+        <section id="tab-perfil" class="tab-panel">
+            <div class="perfil-card" id="perfilCard">
+                <p>Cargando perfil...</p>
+            </div>
+            <div class="progreso-card" id="perfilProgreso">
+                <h3>Mi progreso</h3>
+                <p class="dashboard-vacio">Cargando progreso...</p>
+            </div>
+        </section>
+    </main>
+
+    <script src="../js/alumno.js"></script>
+</body>
+</html>

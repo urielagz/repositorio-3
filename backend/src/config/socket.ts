@@ -5,7 +5,7 @@ import RepositorioChat from "../repositories/RepositorioChat";
 
 // Mismo secreto que usa middlewares/authMiddleware.ts para las rutas REST
 // -- el cliente manda el mismo JWT del login en el "auth" del handshake.
-const JWT_SECRETO = "SECRETO_SUPER_SECRETO";
+const JWT_SECRETO = process.env.JWT_SECRET || "SECRETO_SUPER_SECRETO";
 
 let io: Server | undefined;
 
