@@ -1,6 +1,13 @@
 // ==== CONFIGURACIÓN DEL BACKEND ====
-const API_URL = "https://miztontli-backend.onrender.com"; 
+const API_URL = "https://miztontli-backend.onrender.com";
 let esModoLogin = true;
+
+// Este mismo login.js sirve tanto a /index.html (raíz, para que el link
+// de GitHub Pages entre directo al login) como a /html/login.html (donde
+// viven los demás paneles) -- las rutas relativas a panel*.html cambian
+// según desde dónde se cargue, por eso el prefijo se calcula en vez de
+// quedar fijo.
+const PREFIJO_PANELES = location.pathname.includes("/html/") ? "" : "html/";
 
 // ==== MANEJO DE SESIÓN ====
 function guardarSesion(token, usuario) {
@@ -78,11 +85,13 @@ async function enviarFormulario(event) {
 
             setTimeout(() => {
                 if (rolUsuario === "alumno") {
-                    window.location.href = "html/panel-alumno.html";
-                } else if (rolUsuario === "docente" || rolUsuario === "admin") {
-                    window.location.href = "html/panel.html"; // Panel con navbar (Materias/Comunidad/Perfil), en /html
+                    window.location.href = `${PREFIJO_PANELES}panel-alumno.html`;
+                } else if (rolUsuario === "admin") {
+                    window.location.href = `${PREFIJO_PANELES}admin.html`;
+                } else if (rolUsuario === "docente") {
+                    window.location.href = `${PREFIJO_PANELES}panel.html`; // Panel con navbar (Materias/Comunidad/Perfil), en /html
                 } else {
-                    window.location.href = "html/dashboard-general.html";
+                    window.location.href = `${PREFIJO_PANELES}dashboard-general.html`;
                 }
             }, 1500);
 

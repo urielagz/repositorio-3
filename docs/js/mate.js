@@ -524,7 +524,7 @@ function crearEntregaItem(entrega, puntajeMaximo) {
     item.className = "entrega-item";
 
     const archivosHtml = (entrega.archivos || []).map(archivo =>
-        `<a href="${API_URL}/${archivo.url}" target="_blank" rel="noopener" download>${escaparHtml(archivo.nombre_original || "Archivo")}</a>`
+        `<a href="${API_URL}/uploads/${archivo.url}" target="_blank" rel="noopener" download>${escaparHtml(archivo.nombre_original || "Archivo")}</a>`
     ).join("");
 
     item.innerHTML = `

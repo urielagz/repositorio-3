@@ -195,7 +195,7 @@ function renderizarEstanteUI() {
         libro.className = "libro-card";
         libro.style.background = materia.color || "#00BB77";
         if (materia.icono) {
-            libro.innerHTML = `<img src="${API_URL}/${materia.icono}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:50%;margin-bottom:0.6rem;"><span>${escaparHtml(materia.nombre)}</span>`;
+            libro.innerHTML = `<img src="${API_URL}/uploads/${materia.icono}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:50%;margin-bottom:0.6rem;"><span>${escaparHtml(materia.nombre)}</span>`;
         } else {
             libro.innerHTML = `<div class="libro-icono"></div><span>${escaparHtml(materia.nombre)}</span>`;
         }
@@ -334,7 +334,7 @@ function abrirPagina(item) {
 function renderizarPaginaExplicacion(tema) {
     const contenedor = document.getElementById("materiasContenido");
     const imagenes = [tema.imagen1, tema.imagen2].filter(Boolean)
-        .map(ruta => `<img src="${API_URL}/${ruta}" alt="">`).join("");
+        .map(ruta => `<img src="${API_URL}/uploads/${ruta}" alt="">`).join("");
     contenedor.innerHTML = `
         <button type="button" class="separador-btn" id="btnVolverMaterias">← Volver</button>
         <div class="pagina-libro">
@@ -379,7 +379,7 @@ async function renderizarPaginaActividad(actividad) {
     }
 
     const archivosApoyoHtml = (actividad.archivos_apoyo || []).map(archivo =>
-        `<a href="${API_URL}/${archivo.url}" target="_blank" rel="noopener"> ${escaparHtml(archivo.nombre_original || "Archivo")}</a>`
+        `<a href="${API_URL}/uploads/${archivo.url}" target="_blank" rel="noopener"> ${escaparHtml(archivo.nombre_original || "Archivo")}</a>`
     ).join("");
 
     contenedor.innerHTML = `
@@ -405,7 +405,7 @@ function renderizarEntrega(actividad, entrega) {
 
     if (entrega) {
         const archivosEntregaHtml = (entrega.archivos || []).map(archivo =>
-            `<a href="${API_URL}/${archivo.url}" target="_blank" rel="noopener"> ${escaparHtml(archivo.nombre_original || "Archivo")}</a>`
+            `<a href="${API_URL}/uploads/${archivo.url}" target="_blank" rel="noopener"> ${escaparHtml(archivo.nombre_original || "Archivo")}</a>`
         ).join("");
         contenedor.innerHTML = `
             <div class="entrega-actual">
@@ -635,7 +635,7 @@ function crearBurbujaMensaje(msg) {
 
     const archivosHtml = (msg.archivos || []).map(archivo => {
         const nombre = archivo.nombre_original || "Archivo adjunto";
-        const url = `${API_URL}/${archivo.url}`;
+        const url = `${API_URL}/uploads/${archivo.url}`;
         return `<a href="${url}" target="_blank" rel="noopener" class="chat-archivo"> ${escaparHtml(nombre)}</a>`;
     }).join("");
 
@@ -840,7 +840,7 @@ function renderizarPerfil(perfil) {
     const contenedor = document.getElementById("perfilCard");
     const iniciales = `${(perfil.nombre || "?")[0] || ""}${(perfil.apellido || "")[0] || ""}`.toUpperCase();
     const avatarHtml = perfil.foto_perfil
-        ? `<img src="${API_URL}/${perfil.foto_perfil}" alt="" class="perfil-avatar" style="object-fit: cover;">`
+        ? `<img src="${API_URL}/uploads/${perfil.foto_perfil}" alt="" class="perfil-avatar" style="object-fit: cover;">`
         : `<div class="perfil-avatar">${iniciales}</div>`;
 
     contenedor.innerHTML = `

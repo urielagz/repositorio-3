@@ -79,7 +79,9 @@ async function enviarFormulario(event) {
             setTimeout(() => {
                 if (rolUsuario === "alumno") {
                     window.location.href = "panel-alumno.html";
-                } else if (rolUsuario === "docente" || rolUsuario === "admin") {
+                } else if (rolUsuario === "admin") {
+                    window.location.href = "admin.html";
+                } else if (rolUsuario === "docente") {
                     window.location.href = "panel.html"; // Panel con navbar (Materias/Comunidad/Perfil), en /html
                 } else {
                     window.location.href = "dashboard-general.html";
