@@ -35,7 +35,7 @@ function cerrarSesion() {
     if (socket) socket.disconnect();
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    window.location.href = "login.html";
+    window.location.replace("login.html");
 }
 
 // El backend responde HTML (404 de Express) cuando una ruta no existe;

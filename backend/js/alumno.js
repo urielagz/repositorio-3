@@ -77,7 +77,7 @@ function cerrarSesion() {
     if (socket) socket.disconnect();
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    window.location.href = "login.html";
+    window.location.replace("login.html");
 }
 
 // ===================== TABS =====================

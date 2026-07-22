@@ -84,14 +84,18 @@ async function enviarFormulario(event) {
             const rolUsuario = data.data.rol.toLowerCase(); 
 
             setTimeout(() => {
+                // "replace" en vez de "href": no deja el login como un paso
+                // del historial -- si no, el botón "atrás" del navegador (no
+                // el "‹ Volver" de la app) te devuelve al form de login en
+                // vez de salir de la app, aunque tu sesión siga activa.
                 if (rolUsuario === "alumno") {
-                    window.location.href = `${PREFIJO_PANELES}panel-alumno.html`;
+                    window.location.replace(`${PREFIJO_PANELES}panel-alumno.html`);
                 } else if (rolUsuario === "admin") {
-                    window.location.href = `${PREFIJO_PANELES}admin.html`;
+                    window.location.replace(`${PREFIJO_PANELES}admin.html`);
                 } else if (rolUsuario === "docente") {
-                    window.location.href = `${PREFIJO_PANELES}panel.html`; // Panel con navbar (Materias/Comunidad/Perfil), en /html
+                    window.location.replace(`${PREFIJO_PANELES}panel.html`); // Panel con navbar (Materias/Comunidad/Perfil), en /html
                 } else {
-                    window.location.href = `${PREFIJO_PANELES}dashboard-general.html`;
+                    window.location.replace(`${PREFIJO_PANELES}dashboard-general.html`);
                 }
             }, 1500);
 
