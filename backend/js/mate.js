@@ -475,9 +475,15 @@ async function eliminarTema(tema) {
 function crearItemActividad(actividad, idTema) {
     const item = document.createElement("div");
     item.className = "item-recurso";
+
+    const archivosApoyoHtml = (actividad.archivos_apoyo || []).map(archivo =>
+        `<a href="${archivo.url}" target="_blank" rel="noopener" class="link-descarga">${escaparHtml(archivo.nombre_original || "Archivo")}</a>`
+    ).join("<br>");
+
     item.innerHTML = `
         <strong> ${actividad.titulo}</strong>
         <p>${actividad.descripcion || ""}</p>
+        ${archivosApoyoHtml ? `<div style="margin-bottom:0.5rem;">${archivosApoyoHtml}</div>` : ""}
         <div>
             <button type="button" class="btn-secondary btn-ver-entregas">Ver entregas</button>
             <button type="button" class="btn-secondary btn-editar-actividad">Editar</button>
@@ -749,9 +755,9 @@ async function cargarRecursosTema(idTema) {
         const examenes = (respExamenes.ok && jsonExamenes.ok) ? jsonExamenes.data : [];
 
         contenedor.innerHTML = "";
-        recursos.forEach(recurso => contenedor.appendChild(crearItemRecurso(recurso, idTema)));
         actividades.forEach(actividad => contenedor.appendChild(crearItemActividad(actividad, idTema)));
         examenes.forEach(examen => contenedor.appendChild(crearItemExamen(examen, idTema)));
+        recursos.forEach(recurso => contenedor.appendChild(crearItemRecurso(recurso, idTema)));
         if (recursos.length === 0 && actividades.length === 0 && examenes.length === 0) {
             contenedor.innerHTML = `<div class="item-recurso">Sin recursos, actividades ni exámenes aún.</div>`;
         }

@@ -93,6 +93,19 @@ body {
     white-space: nowrap;
 }
 
+.btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-dark);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+.btn-secondary:hover { background-color: var(--bg-main); }
+
 /* ===================== Layout general ===================== */
 .panel-content {
     flex: 1;
@@ -588,6 +601,72 @@ body {
     line-height: 1;
 }
 .chat-adjunto-chip button:hover { color: var(--secondary-red); }
+
+/* Tarjetas de archivo (entrega de actividades) -- una por archivo
+   seleccionado, con una etiqueta de color según su tipo. */
+.archivos-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+.archivo-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0.6rem 0.8rem;
+    background: var(--bg-card, #fff);
+}
+.archivo-card-badge {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #fff;
+    padding: 0.3rem 0.5rem;
+    border-radius: 6px;
+    background: #64748b;
+}
+.archivo-card-badge.archivo-pdf { background: #dc2626; }
+.archivo-card-badge.archivo-doc { background: #2563eb; }
+.archivo-card-badge.archivo-xls { background: #16a34a; }
+.archivo-card-badge.archivo-ppt { background: #ea580c; }
+.archivo-card-badge.archivo-img { background: #9333ea; }
+.archivo-card-badge.archivo-video { background: #db2777; }
+.archivo-card-badge.archivo-audio { background: #0d9488; }
+.archivo-card-badge.archivo-zip { background: #78716c; }
+.archivo-card-badge.archivo-otro { background: #64748b; }
+
+.archivo-card-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+.archivo-card-nombre {
+    font-size: 0.88rem;
+    color: var(--text-dark);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.archivo-card-tamano {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+.archivo-card-quitar {
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    line-height: 1;
+    padding: 0.2rem 0.4rem;
+}
+.archivo-card-quitar:hover { color: var(--secondary-red); }
 
 .chat-form {
     display: flex;

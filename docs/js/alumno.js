@@ -16,6 +16,9 @@ let mensajeRespondiendo = null; // { autor, fragmento }
 let archivosPendientes = []; // File[]
 let socket = null;
 
+// Entrega de actividades (tarjetas de archivo por tipo, no el input nativo)
+let archivosEntregaPendientes = []; // File[]
+
 // Empuja los mensajes nuevos en vivo (Socket.IO) al chat activo, en vez de
 // esperar el siguiente ciclo de polling (hasta INTERVALO_POLLING_MS).
 function inicializarSocketChat(token) {
@@ -482,6 +485,8 @@ function renderizarEntrega(actividad, entrega) {
         return;
     }
 
+    archivosEntregaPendientes = [];
+
     contenedor.innerHTML = `
         <form class="form-entrega" id="formEntrega">
             <h3>Entregar actividad</h3>
@@ -494,27 +499,86 @@ function renderizarEntrega(actividad, entrega) {
                 <input type="url" id="entregaUrl" placeholder="https://...">
             </div>
             <div class="form-group">
-                <label for="entregaArchivos">Archivos (máx. 5, opcional)</label>
-                <input type="file" id="entregaArchivos" multiple>
+                <label>Archivos (máx. ${MAX_ARCHIVOS_ENTREGA}, opcional)</label>
+                <button type="button" class="btn-secondary" id="btnAdjuntarEntrega">+ Adjuntar archivos</button>
+                <input type="file" id="entregaArchivos" multiple class="hidden">
+                <div id="entregaArchivosPreview" class="archivos-preview"></div>
             </div>
             <button type="submit" class="btn-primary">Entregar</button>
         </form>
     `;
+    document.getElementById("btnAdjuntarEntrega").addEventListener("click", () => document.getElementById("entregaArchivos").click());
+    document.getElementById("entregaArchivos").addEventListener("change", (e) => agregarArchivosEntrega(e.target.files));
     document.getElementById("formEntrega").addEventListener("submit", (e) => entregarActividad(e, actividad));
+}
+
+function agregarArchivosEntrega(fileList) {
+    for (const archivo of fileList) {
+        if (archivosEntregaPendientes.length >= MAX_ARCHIVOS_ENTREGA) {
+            alert(`Puedes adjuntar como máximo ${MAX_ARCHIVOS_ENTREGA} archivos.`);
+            break;
+        }
+        archivosEntregaPendientes.push(archivo);
+    }
+    document.getElementById("entregaArchivos").value = "";
+    renderizarArchivosEntregaPreview();
+}
+
+function quitarArchivoEntrega(indice) {
+    archivosEntregaPendientes.splice(indice, 1);
+    renderizarArchivosEntregaPreview();
+}
+
+// Categoría por extensión, solo para elegir la etiqueta/color de la
+// tarjeta -- la clasificación real (y la validación de tipo permitido)
+// la hace el backend con clasificarTipo() al recibir el archivo.
+function categorizarArchivoCliente(nombre) {
+    const ext = (nombre.split(".").pop() || "").toLowerCase();
+    if (ext === "pdf") return { etiqueta: "PDF", clase: "archivo-pdf" };
+    if (["doc", "docx", "txt", "rtf", "odt"].includes(ext)) return { etiqueta: "DOC", clase: "archivo-doc" };
+    if (["xls", "xlsx", "csv", "ods"].includes(ext)) return { etiqueta: "XLS", clase: "archivo-xls" };
+    if (["ppt", "pptx", "odp"].includes(ext)) return { etiqueta: "PPT", clase: "archivo-ppt" };
+    if (["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"].includes(ext)) return { etiqueta: "IMG", clase: "archivo-img" };
+    if (["mp4", "avi", "mov", "wmv", "mkv", "webm"].includes(ext)) return { etiqueta: "VIDEO", clase: "archivo-video" };
+    if (["mp3", "wav", "ogg", "m4a"].includes(ext)) return { etiqueta: "AUDIO", clase: "archivo-audio" };
+    if (["zip", "rar", "7z", "tar", "gz"].includes(ext)) return { etiqueta: "ZIP", clase: "archivo-zip" };
+    return { etiqueta: "FILE", clase: "archivo-otro" };
+}
+
+function formatearTamano(bytes) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function renderizarArchivosEntregaPreview() {
+    const contenedor = document.getElementById("entregaArchivosPreview");
+    contenedor.innerHTML = "";
+    archivosEntregaPendientes.forEach((archivo, indice) => {
+        const categoria = categorizarArchivoCliente(archivo.name);
+        const card = document.createElement("div");
+        card.className = "archivo-card";
+        card.innerHTML = `
+            <span class="archivo-card-badge ${categoria.clase}">${categoria.etiqueta}</span>
+            <div class="archivo-card-info">
+                <span class="archivo-card-nombre">${escaparHtml(archivo.name)}</span>
+                <span class="archivo-card-tamano">${formatearTamano(archivo.size)}</span>
+            </div>
+            <button type="button" class="archivo-card-quitar" title="Quitar">&times;</button>
+        `;
+        card.querySelector(".archivo-card-quitar").addEventListener("click", () => quitarArchivoEntrega(indice));
+        contenedor.appendChild(card);
+    });
 }
 
 async function entregarActividad(event, actividad) {
     event.preventDefault();
     const comentario = document.getElementById("entregaComentario").value.trim();
     const urlEntrega = document.getElementById("entregaUrl").value.trim();
-    const archivos = document.getElementById("entregaArchivos").files;
+    const archivos = archivosEntregaPendientes;
 
     if (!comentario && !urlEntrega && archivos.length === 0) {
         alert("Debes adjuntar al menos un archivo, escribir tu entrega en texto o compartir una URL.");
-        return;
-    }
-    if (archivos.length > MAX_ARCHIVOS_ENTREGA) {
-        alert(`Puedes adjuntar como máximo ${MAX_ARCHIVOS_ENTREGA} archivos.`);
         return;
     }
 
