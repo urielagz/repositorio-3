@@ -3,6 +3,7 @@ import path from "path";
 import RepositorioChat from "../repositories/RepositorioChat";
 import RepositorioMaterias from "../repositories/RepositorioMateria";
 import { clasificarTipo } from "../config/uploadAcademico";
+import { subirArchivo } from "../config/cloudinary";
 import { emitirMensaje } from "../config/socket";
 
 const MAX_ARCHIVOS_MENSAJE = 5;
@@ -160,11 +161,11 @@ class ChatController {
                 id_grupo: idGrupo,
                 id_usuario: usuario.id,
                 contenido,
-                archivos: archivos.map(archivo => ({
-                    url: `chat/${archivo.filename}`,
+                archivos: await Promise.all(archivos.map(async archivo => ({
+                    url: await subirArchivo(archivo.buffer, archivo.originalname, "chat"),
                     nombre_original: archivo.originalname,
                     tipo: clasificarTipo(path.extname(archivo.originalname))
-                }))
+                })))
             });
 
             emitirMensaje(idGrupo, mensaje);

@@ -238,7 +238,7 @@ function crearBurbujaMensaje(msg) {
 
     const archivosHtml = (msg.archivos || []).map(archivo => {
         const nombre = archivo.nombre_original || "Archivo adjunto";
-        const url = `${API_URL}/uploads/${archivo.url}`;
+        const url = `${archivo.url}`;
         return `<a href="${url}" target="_blank" rel="noopener" class="chat-archivo"> ${escaparHtml(nombre)}</a>`;
     }).join("");
 
@@ -402,7 +402,7 @@ function renderizarPerfil(perfil) {
     const contenedor = document.getElementById("perfilCard");
     const iniciales = `${(perfil.nombre || "?")[0] || ""}${(perfil.apellido || "")[0] || ""}`.toUpperCase();
     const avatarHtml = perfil.foto_perfil
-        ? `<img src="${API_URL}/uploads/${perfil.foto_perfil}" alt="" class="perfil-avatar" style="object-fit: cover;">`
+        ? `<img src="${perfil.foto_perfil}" alt="" class="perfil-avatar" style="object-fit: cover;">`
         : `<div class="perfil-avatar">${iniciales}</div>`;
 
     contenedor.innerHTML = `

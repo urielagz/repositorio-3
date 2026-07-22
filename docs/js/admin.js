@@ -86,24 +86,15 @@ function crearSolicitudItem(solicitud) {
 
 // El archivo está protegido (solo admin), así que no se puede abrir con un
 // <a href> normal -- hay que pedirlo con el token y abrirlo desde un blob.
-async function verArchivoDocente(nombreArchivo) {
-    if (!nombreArchivo) {
+// cedula_profesional/diploma ya guardan la URL completa de Cloudinary
+// (antes era un nombre de archivo que había que pedir al backend con
+// autenticación porque vivía en disco local).
+function verArchivoDocente(url) {
+    if (!url) {
         alert("Este archivo no está disponible.");
         return;
     }
-    try {
-        const token = localStorage.getItem("token");
-        const respuesta = await fetch(`${API_URL}/docentes/archivo/${nombreArchivo}`, {
-            headers: { "Authorization": `Bearer ${token}` }
-        });
-        if (!respuesta.ok) throw new Error("No se pudo abrir el archivo.");
-        const blob = await respuesta.blob();
-        const url = URL.createObjectURL(blob);
-        window.open(url, "_blank");
-    } catch (error) {
-        console.error("Error al abrir archivo de docente:", error);
-        alert(error.message);
-    }
+    window.open(url, "_blank");
 }
 
 async function decidirSolicitud(idSolicitud, accion, boton) {

@@ -6,9 +6,9 @@ import RepositorioNotificaciones from "../repositories/RepositorioNotificaciones
 import { notificarMateria, correoMateria } from "../utils/notificaciones";
 import { clasificarTipo } from "../config/uploadAcademico";
 import { enviarCorreo } from "../config/mailer";
+import { subirArchivo } from "../config/cloudinary";
 import { repos } from "../repositories";
 import path from "path";
-import fs from "fs";
 const repoTemas = new RepositorioTemas();
 
 class ActividadController {
@@ -116,10 +116,10 @@ class ActividadController {
                 fecha_limite: fecha_limite ? new Date(fecha_limite) : undefined,
                 puntaje: puntaje !== undefined ? Number(puntaje) : undefined,
                 archivos_permitidos,
-                archivos_apoyo: archivos.map(archivo => ({
-                    url: `actividades/${archivo.filename}`,
+                archivos_apoyo: await Promise.all(archivos.map(async archivo => ({
+                    url: await subirArchivo(archivo.buffer, archivo.originalname, "actividades"),
                     nombre_original: archivo.originalname
-                })),
+                }))),
                 id_tema: Number(id_tema),
                 id_docente: usuario.id
             });
@@ -194,10 +194,10 @@ class ActividadController {
                 archivos_permitidos,
                 archivos_apoyo: [
                     ...(actividadExistente.archivos_apoyo ?? []),
-                    ...archivosNuevos.map(archivo => ({
-                        url: `actividades/${archivo.filename}`,
+                    ...await Promise.all(archivosNuevos.map(async archivo => ({
+                        url: await subirArchivo(archivo.buffer, archivo.originalname, "actividades"),
                         nombre_original: archivo.originalname
-                    }))
+                    })))
                 ]
             });
 
@@ -281,14 +281,6 @@ async entregar(req: Request, res: Response): Promise<Response> {
     const MAX_ARCHIVOS_ENTREGA = 5;
     const archivos = ((req as any).files as Express.Multer.File[] | undefined) ?? [];
 
-    const borrarArchivosSubidos = () => {
-        for (const archivo of archivos) {
-            if (fs.existsSync(archivo.path)) {
-                fs.unlinkSync(archivo.path);
-            }
-        }
-    };
-
     try {
 
         const idActividad = Number(req.params.id);
@@ -296,7 +288,6 @@ async entregar(req: Request, res: Response): Promise<Response> {
         const { comentario, url_entrega } = req.body;
 
         if (!Number.isInteger(idActividad)) {
-            borrarArchivosSubidos();
             return res.status(400).json({
                 ok: false,
                 mensaje: "ID inválido."
@@ -304,7 +295,6 @@ async entregar(req: Request, res: Response): Promise<Response> {
         }
 
         if (archivos.length > MAX_ARCHIVOS_ENTREGA) {
-            borrarArchivosSubidos();
             return res.status(400).json({
                 ok: false,
                 mensaje: `Puedes adjuntar como máximo ${MAX_ARCHIVOS_ENTREGA} archivos.`
@@ -314,7 +304,6 @@ async entregar(req: Request, res: Response): Promise<Response> {
         const actividad = await RepositorioActividades.obtenerPorId(idActividad);
 
         if (!actividad) {
-            borrarArchivosSubidos();
             return res.status(404).json({
                 ok: false,
                 mensaje: "Actividad no encontrada."
@@ -328,7 +317,6 @@ async entregar(req: Request, res: Response): Promise<Response> {
             );
 
         if (!inscrito) {
-            borrarArchivosSubidos();
             return res.status(403).json({
                 ok: false,
                 mensaje: "No estás inscrito en la materia de esta actividad."
@@ -361,8 +349,6 @@ async entregar(req: Request, res: Response): Promise<Response> {
             );
 
             if (archivoNoPermitido) {
-                borrarArchivosSubidos();
-
                 return res.status(400).json({
                     ok: false,
                     mensaje:
@@ -377,10 +363,10 @@ async entregar(req: Request, res: Response): Promise<Response> {
         const entrega = await RepositorioActividades.entregar({
             id_usuario: usuario.id,
             id_actividad: idActividad,
-            archivos: archivos.map(archivo => ({
-                url: `entregas/${archivo.filename}`,
+            archivos: await Promise.all(archivos.map(async archivo => ({
+                url: await subirArchivo(archivo.buffer, archivo.originalname, "entregas"),
                 nombre_original: archivo.originalname
-            })),
+            }))),
             url_entrega,
             comentario_alumno: comentario
         });
@@ -416,7 +402,6 @@ async entregar(req: Request, res: Response): Promise<Response> {
     } catch (error) {
 
         console.error(error);
-        borrarArchivosSubidos();
 
         return res.status(500).json({
             ok: false,
@@ -499,14 +484,6 @@ async entregar(req: Request, res: Response): Promise<Response> {
 
             if (entrega.calificacion !== null && entrega.calificacion !== undefined) {
                 return res.status(400).json({ ok: false, mensaje: "No puedes eliminar una entrega que ya fue calificada." });
-            }
-
-            for (const archivo of entrega.archivos ?? []) {
-                const ruta = path.join(process.cwd(), process.env.UPLOADS_PATH || "uploads", archivo.url);
-
-                if (fs.existsSync(ruta)) {
-                    fs.unlinkSync(ruta);
-                }
             }
 
             await RepositorioActividades.eliminarEntrega(entrega.id_registro!);

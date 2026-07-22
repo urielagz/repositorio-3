@@ -6,6 +6,7 @@ import { enviarCorreo } from "../config/mailer";
 import { notificarMateria, correoMateria } from "../utils/notificaciones";
 import RepositorioChat from "../repositories/RepositorioChat";
 import RepositorioProgreso from "../repositories/RepositorioProgreso";
+import { subirArchivo } from "../config/cloudinary";
 
 const repoTemas = new RepositorioTemas();
 
@@ -144,7 +145,7 @@ class MateriaController {
             // cualquier texto que también hayan puesto en icono -- el
             // ícono real de la materia es el archivo subido.
             const archivo = req.file as Express.Multer.File | undefined;
-            const icono = archivo ? `materias/${archivo.filename}` : req.body.icono;
+            const icono = archivo ? await subirArchivo(archivo.buffer, archivo.originalname, "materias") : req.body.icono;
 
             if (!nombre || !id_docente) {
 
@@ -312,7 +313,7 @@ class MateriaController {
             // se mandan, para poder actualizar solo el ícono sin tener
             // que reenviar nombre/color/orden.
             const archivo = req.file as Express.Multer.File | undefined;
-            const icono = archivo ? `materias/${archivo.filename}` : (req.body.icono ?? materiaExistente.icono);
+            const icono = archivo ? await subirArchivo(archivo.buffer, archivo.originalname, "materias") : (req.body.icono ?? materiaExistente.icono);
 
             const materia = await RepositorioMaterias.actualizar(id, {
                 nombre: nombre ?? materiaExistente.nombre,

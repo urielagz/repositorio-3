@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { RepositorioTemas } from "../repositories/RepositorioTemas";
 import RepositorioMaterias from "../repositories/RepositorioMateria";
 import { notificarMateria } from "../utils/notificaciones";
+import { subirArchivo } from "../config/cloudinary";
 
 const repo = new RepositorioTemas();
 
@@ -174,14 +175,14 @@ export class TemaController {
             [fieldname: string]: Express.Multer.File[];
         };
 
-        // Si se sube una imagen nueva, se guarda su ruta.
+        // Si se sube una imagen nueva, se guarda su URL de Cloudinary.
         // Si no, se conserva la imagen anterior.
         const imagen1 = archivos?.imagen1?.[0]
-            ? `/uploads/temas/${archivos.imagen1[0].filename}`
+            ? await subirArchivo(archivos.imagen1[0].buffer, archivos.imagen1[0].originalname, "temas")
             : temaExistente.imagen1;
 
         const imagen2 = archivos?.imagen2?.[0]
-            ? `/uploads/temas/${archivos.imagen2[0].filename}`
+            ? await subirArchivo(archivos.imagen2[0].buffer, archivos.imagen2[0].originalname, "temas")
             : temaExistente.imagen2;
 
         const tema = await repo.actualizarContenido(id, {

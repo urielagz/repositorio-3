@@ -1,22 +1,10 @@
 import multer from "multer";
 import path from "path";
-import fs from "fs";
 
-const uploadsPath = process.env.UPLOADS_PATH || "uploads";
-if (!fs.existsSync(uploadsPath)) {
-    fs.mkdirSync(uploadsPath, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, uploadsPath),
-    filename: (_req, file, cb) => {
-        const nombreUnico = `${Date.now()}-${file.originalname}`;
-        cb(null, nombreUnico);
-    },
-});
-
+// En memoria, no en disco: el archivo se sube a Cloudinary justo después
+// (ver config/cloudinary.ts) -- Render no tiene disco persistente.
 export const upload = multer({
-    storage,
+    storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
     fileFilter: (_req, file, cb) => {
         const permitidos = [".pdf", ".jpg", ".jpeg", ".png"];

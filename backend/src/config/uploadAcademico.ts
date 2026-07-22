@@ -1,31 +1,14 @@
 import multer from "multer";
 import path from "path";
-import fs from "fs";
 
 // Multer dedicado al módulo académico (recursos de un tema y entregas de
 // actividades). No comparte configuración con config/upload.ts, que es el
 // usado por el flujo de solicitud de docentes (sistema de usuarios).
-const RECURSOS_PATH = path.join(process.env.UPLOADS_PATH || "uploads", "recursos");
-const ENTREGAS_PATH = path.join(process.env.UPLOADS_PATH || "uploads", "entregas");
-const ACTIVIDADES_PATH = path.join(process.env.UPLOADS_PATH || "uploads", "actividades");
-const COMUNIDAD_PATH = path.join(process.env.UPLOADS_PATH || "uploads", "comunidad");
-const TEMA_PATH = path.join(process.env.UPLOADS_PATH || "uploads", "temas");
-const CHAT_PATH = path.join(process.env.UPLOADS_PATH || "uploads", "chat");
-const MATERIA_PATH = path.join(process.env.UPLOADS_PATH || "uploads", "materias");
-
-for (const ruta of [
-    RECURSOS_PATH,
-    ENTREGAS_PATH,
-    ACTIVIDADES_PATH,
-    COMUNIDAD_PATH,
-    TEMA_PATH,
-    CHAT_PATH,
-    MATERIA_PATH
-]) {
-    if (!fs.existsSync(ruta)) {
-        fs.mkdirSync(ruta, { recursive: true });
-    }
-}
+//
+// En memoria, no en disco: cada controlador sube el buffer a Cloudinary
+// justo después (ver config/cloudinary.ts) -- Render no tiene disco
+// persistente, así que guardar localmente se perdía en cada redeploy.
+const storage = multer.memoryStorage();
 
 // Comparte esta lista uploadRecurso, uploadEntrega, uploadActividadApoyo
 // y uploadComunidad (recursos, entregas de actividades, archivos de
@@ -54,21 +37,6 @@ const EXTENSIONES_PERMITIDAS = [
     ".stl", ".obj", ".fbx"
 ];
 
-function crearStorage(destino: string) {
-    return multer.diskStorage({
-        destination: (_req, _file, cb) => cb(null, destino),
-        filename: (_req, file, cb) => {
-            // El nombre original puede venir con "../" o separadores de ruta;
-            // nos quedamos solo con el basename y sanitizamos antes de escribir en disco.
-            const nombreBase = path
-                .basename(file.originalname)
-                .replace(/[^a-zA-Z0-9._-]/g, "_");
-
-            cb(null, `${Date.now()}-${nombreBase}`);
-        },
-    });
-}
-
 function filtroArchivos(_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) {
     const ext = path.extname(file.originalname).toLowerCase();
 
@@ -80,13 +48,13 @@ function filtroArchivos(_req: any, file: Express.Multer.File, cb: multer.FileFil
 }
 
 export const uploadRecurso = multer({
-    storage: crearStorage(RECURSOS_PATH),
+    storage,
     limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
     fileFilter: filtroArchivos,
 });
 
 export const uploadEntrega = multer({
-    storage: crearStorage(ENTREGAS_PATH),
+    storage,
     limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
     fileFilter: filtroArchivos,
 });
@@ -94,7 +62,7 @@ export const uploadEntrega = multer({
 // Archivos de apoyo que el docente adjunta a una actividad (opcionales,
 // pueden ser varios).
 export const uploadActividadApoyo = multer({
-    storage: crearStorage(ACTIVIDADES_PATH),
+    storage,
     limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
     fileFilter: filtroArchivos,
 });
@@ -102,14 +70,14 @@ export const uploadActividadApoyo = multer({
 // Fotos/videos/documentos adjuntos a una publicación de la comunidad
 // (opcionales, pueden ser varios).
 export const uploadComunidad = multer({
-    storage: crearStorage(COMUNIDAD_PATH),
+    storage,
     limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
     fileFilter: filtroArchivos,
 });
 
 // Archivos adjuntos a un mensaje de chat (público o de materia).
 export const uploadChat = multer({
-    storage: crearStorage(CHAT_PATH),
+    storage,
     limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
     fileFilter: filtroArchivos,
 });
@@ -126,14 +94,14 @@ function filtroImagenes(_req: any, file: Express.Multer.File, cb: multer.FileFil
 }
 
 export const uploadImagenesTema = multer({
-    storage: crearStorage(TEMA_PATH),
+    storage,
     limits: { fileSize: 5 * 1024 * 1024 },
     fileFilter: filtroImagenes,
 });
 
 // Ícono de una materia (un solo archivo, campo "icono").
 export const uploadIconoMateria = multer({
-    storage: crearStorage(MATERIA_PATH),
+    storage,
     limits: { fileSize: 5 * 1024 * 1024 },
     fileFilter: filtroImagenes,
 });

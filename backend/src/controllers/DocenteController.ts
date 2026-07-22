@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 
 import { repos } from "../repositories";
 import { enviarCorreo } from "../config/mailer";
+import { subirArchivo } from "../config/cloudinary";
 import { generarPasswordTemporal } from "../utils/generarPassword";
 
 const repoEspera = repos.docentesEspera;
@@ -37,44 +38,43 @@ export class DocenteController {
                 });
             }
 
+            const [urlCedula, urlDiploma] = await Promise.all([
+                subirArchivo(archivos.cedula_profesional[0].buffer, archivos.cedula_profesional[0].originalname, "docentes"),
+                subirArchivo(archivos.diploma[0].buffer, archivos.diploma[0].originalname, "docentes")
+            ]);
+
             const solicitud = await repoEspera.agregar(
                 nombre,
                 apellido,
                 correo,
-                archivos.cedula_profesional[0].filename,
-                archivos.diploma[0].filename
+                urlCedula,
+                urlDiploma
             );
 
-            // El envío de correo es best-effort: si falla (SMTP no configurado,
-            // credenciales inválidas, etc.) la solicitud ya quedó guardada y no
-            // debe tumbar el servidor por una promesa sin capturar.
-            try {
-                // Confirmación al docente
-                await enviarCorreo(
-                    correo,
-                    "Solicitud recibida - Miztontli",
-                    `<p>Hola ${nombre}, recibimos tu solicitud para registrarte como docente.
-                     Tu cédula y diploma están en revisión. Te avisaremos por este medio cuando sea aprobada.</p>`
-                );
+            // El envío de correo es best-effort: no se espera (ver
+            // config/mailer.ts), así que un SMTP lento no tumba la respuesta.
+            enviarCorreo(
+                correo,
+                "Solicitud recibida - Miztontli",
+                `<p>Hola ${nombre}, recibimos tu solicitud para registrarte como docente.
+                 Tu cédula y diploma están en revisión. Te avisaremos por este medio cuando sea aprobada.</p>`
+            ).catch(errorCorreo => console.error("No se pudo enviar el correo de confirmación de docente:", errorCorreo));
 
-                // Notificación al admin -- con la cédula y el diploma adjuntos de
-                // verdad (antes el correo solo decía "revisa el panel" sin mandar
-                // nada, y no había forma práctica de verlos sin conocer de
-                // antemano el nombre del archivo en disco).
-                await enviarCorreo(
-                    process.env.ADMIN_EMAIL as string,
-                    "Nueva solicitud de docente pendiente",
-                    `<p>${nombre} ${apellido} (${correo}) solicitó registrarse como docente.</p>
-                     <p>ID de solicitud: ${solicitud.id_solicitud}</p>
-                     <p>Se adjuntan su cédula profesional y su diploma.</p>`,
-                    [
-                        { filename: `cedula_${archivos.cedula_profesional[0].originalname}`, path: archivos.cedula_profesional[0].path },
-                        { filename: `diploma_${archivos.diploma[0].originalname}`, path: archivos.diploma[0].path }
-                    ]
-                );
-            } catch (errorCorreo) {
-                console.error("No se pudo enviar el correo de solicitud de docente:", errorCorreo);
-            }
+            // Notificación al admin -- con la cédula y el diploma adjuntos de
+            // verdad (antes el correo solo decía "revisa el panel" sin mandar
+            // nada, y no había forma práctica de verlos sin conocer de
+            // antemano el nombre del archivo en disco).
+            enviarCorreo(
+                process.env.ADMIN_EMAIL as string,
+                "Nueva solicitud de docente pendiente",
+                `<p>${nombre} ${apellido} (${correo}) solicitó registrarse como docente.</p>
+                 <p>ID de solicitud: ${solicitud.id_solicitud}</p>
+                 <p>Se adjuntan su cédula profesional y su diploma.</p>`,
+                [
+                    { filename: `cedula_${archivos.cedula_profesional[0].originalname}`, content: archivos.cedula_profesional[0].buffer },
+                    { filename: `diploma_${archivos.diploma[0].originalname}`, content: archivos.diploma[0].buffer }
+                ]
+            ).catch(errorCorreo => console.error("No se pudo enviar el correo al admin de la nueva solicitud:", errorCorreo));
 
             res.json({
                 ok: true,

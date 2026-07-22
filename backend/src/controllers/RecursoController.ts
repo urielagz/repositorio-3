@@ -4,6 +4,7 @@ import RepositorioRecursos from "../repositories/RepositorioRecursos";
 import { RepositorioTemas } from "../repositories/RepositorioTemas";
 import RepositorioMaterias from "../repositories/RepositorioMateria";
 import { clasificarTipo } from "../config/uploadAcademico";
+import { subirArchivo } from "../config/cloudinary";
 import { ArchivoRecurso } from "../models/Recurso";
 import { notificarMateria } from "../utils/notificaciones";
 
@@ -14,11 +15,11 @@ const MAX_ARCHIVOS_RECURSO = 5;
 // "RecursoController.crear" como referencia de función, sin el objeto
 // receptor -- un método normal (no arrow) perdería su "this" ahí y
 // "this.mapearArchivo" tronaría con "Cannot read properties of undefined".
-function mapearArchivo(archivo: Express.Multer.File): ArchivoRecurso {
+async function mapearArchivo(archivo: Express.Multer.File): Promise<ArchivoRecurso> {
     const extension = path.extname(archivo.originalname);
 
     return {
-        url: `recursos/${archivo.filename}`,
+        url: await subirArchivo(archivo.buffer, archivo.originalname, "recursos"),
         nombre_original: archivo.originalname,
         tipo: clasificarTipo(extension) as any,
         extension,
@@ -136,7 +137,7 @@ class RecursoController {
             const recurso = await RepositorioRecursos.crear({
                 titulo,
                 descripcion,
-                archivos: archivos.map(archivo => mapearArchivo(archivo)),
+                archivos: await Promise.all(archivos.map(archivo => mapearArchivo(archivo))),
                 id_tema: Number(id_tema),
                 id_usuario: usuario.id
             });
@@ -200,7 +201,7 @@ class RecursoController {
             }
 
             const archivos = archivosNuevos.length > 0
-                ? [...archivosActuales, ...archivosNuevos.map(archivo => mapearArchivo(archivo))]
+                ? [...archivosActuales, ...await Promise.all(archivosNuevos.map(archivo => mapearArchivo(archivo)))]
                 : undefined;
 
             const actualizado = await RepositorioRecursos.actualizar(id, titulo, descripcion, archivos);
@@ -297,13 +298,28 @@ class RecursoController {
                 return;
             }
 
-            const ruta = path.join(process.cwd(), process.env.UPLOADS_PATH || "uploads", archivo.url);
+            // El archivo vive en Cloudinary (URL absoluta), no en disco local
+            // -- se reenvía aquí para no cambiar el contrato del endpoint
+            // (el frontend espera recibir el archivo directo, con
+            // Content-Disposition, no una redirección).
+            const respuestaArchivo = await fetch(archivo.url);
 
-            res.download(ruta, archivo.nombre_original || recurso.titulo, (error) => {
-                if (error && !res.headersSent) {
-                    res.status(404).json({ ok: false, mensaje: "Archivo no encontrado." });
-                }
-            });
+            if (!respuestaArchivo.ok || !respuestaArchivo.body) {
+                res.status(404).json({ ok: false, mensaje: "Archivo no encontrado." });
+                return;
+            }
+
+            res.setHeader(
+                "Content-Type",
+                respuestaArchivo.headers.get("content-type") || "application/octet-stream"
+            );
+            res.setHeader(
+                "Content-Disposition",
+                `attachment; filename="${archivo.nombre_original || recurso.titulo}"`
+            );
+
+            const buffer = Buffer.from(await respuestaArchivo.arrayBuffer());
+            res.send(buffer);
 
         } catch (error) {
             console.error(error);

@@ -15,9 +15,12 @@ export const transporter = nodemailer.createTransport({
     socketTimeout: 10000,
 });
 
+// "content" (buffer en memoria) en vez de "path": los archivos subidos ya
+// no tocan disco local (ver config/uploadAcademico.ts), así que no hay
+// una ruta de archivo que adjuntar directamente.
 export interface AdjuntoCorreo {
     filename: string;
-    path: string;
+    content: Buffer;
 }
 
 export async function enviarCorreo(

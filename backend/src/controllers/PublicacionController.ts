@@ -5,6 +5,7 @@ import { RepositorioTemas } from "../repositories/RepositorioTemas";
 import RepositorioActividades from "../repositories/RepositorioActividades";
 import RepositorioExamenes from "../repositories/RepositorioExamenes";
 import { clasificarTipo } from "../config/uploadAcademico";
+import { subirArchivo } from "../config/cloudinary";
 import { enviarCorreo } from "../config/mailer";
 import path from "path";
 
@@ -138,11 +139,11 @@ export class PublicacionController {
                 titulo,
                 contenido,
                 tipo,
-                archivos: archivos.map(archivo => ({
-                    url: `comunidad/${archivo.filename}`,
+                archivos: await Promise.all(archivos.map(async archivo => ({
+                    url: await subirArchivo(archivo.buffer, archivo.originalname, "comunidad"),
                     nombre_original: archivo.originalname,
                     tipo: clasificarTipo(path.extname(archivo.originalname))
-                })),
+                }))),
                 id_usuario: usuario.id,
                 id_materia: idMateria,
                 id_tema: idTemaFinal,

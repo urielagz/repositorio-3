@@ -1,5 +1,4 @@
 import { Router } from "express";
-import path from "path";
 import { DocenteController } from "../controllers/DocenteController";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { adminMiddleware } from "../middlewares/adminMiddleware";
@@ -21,21 +20,9 @@ router.get("/pendientes", authMiddleware, adminMiddleware, controller.listarPend
 router.post("/:id/aprobar", authMiddleware, adminMiddleware, controller.aprobar);
 router.post("/:id/rechazar", authMiddleware, adminMiddleware, controller.rechazar);
 
-// Ver documento (cédula o diploma) — solo admin
-router.get(
-    "/archivo/:nombreArchivo",
-    authMiddleware,
-    adminMiddleware,
-    (req, res) => {
-        const ruta = path.join(
-            process.cwd(),
-            process.env.UPLOADS_PATH || "uploads",
-            String(req.params.nombreArchivo)
-        );
-        res.sendFile(ruta, (err) => {
-            if (err) res.status(404).json({ ok: false, mensaje: "Archivo no encontrado" });
-        });
-    }
-);
+// Antes había una ruta "/archivo/:nombreArchivo" que servía el PDF/imagen
+// desde disco local -- ya no aplica: cedula_profesional/diploma ahora
+// guardan la URL completa de Cloudinary, así que el frontend la abre
+// directo (ver admin.js).
 
 export default router;
