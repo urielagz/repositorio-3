@@ -1082,14 +1082,54 @@ function renderizarCalendario(eventos) {
         const titulo = evento.titulo || evento.nombre || "Evento";
         const fecha = evento.fecha_limite || evento.fecha || evento.fecha_creacion;
         const tipo = evento.tipo === "examen" ? " Examen" : evento.tipo === "actividad" ? " Actividad" : " Evento";
-        const nombreMateria = evento.materia && evento.materia.nombre ? evento.materia.nombre : "";
+        const nombreMateria = evento.nombre_materia || (evento.materia && evento.materia.nombre) || "";
         item.innerHTML = `
             <strong>${escaparHtml(titulo)}</strong>
             <span>${tipo}${nombreMateria ? ` · ${escaparHtml(nombreMateria)}` : ""}</span>
             ${fecha ? `<span class="dashboard-fecha">${formatearFecha(fecha)}</span>` : ""}
         `;
+        if (evento.tipo === "actividad" || evento.tipo === "examen") {
+            item.classList.add("clicable");
+            item.addEventListener("click", () => irAEventoCalendario(evento));
+        }
         contenedor.appendChild(item);
     });
+}
+
+// Salta directo desde el calendario del dashboard a la actividad/examen,
+// sin tener que navegar materia por materia y tema por tema.
+async function irAEventoCalendario(evento) {
+    // Si es la primera vez que se visita "Materias", cargarEstante() la
+    // dispararía también cambiarTab() de forma asíncrona -- se espera aquí
+    // para que no termine después y sobrescriba la actividad/examen ya
+    // renderizado con el estante de materias.
+    const primeraVez = !materiasInicializadas;
+    materiasInicializadas = true;
+    cambiarTab("materias");
+    if (primeraVez) await cargarEstante();
+
+    const contenedor = document.getElementById("materiasContenido");
+    contenedor.innerHTML = `<p class="dashboard-vacio">Cargando...</p>`;
+
+    try {
+        const token = localStorage.getItem("token");
+        const ruta = evento.tipo === "actividad" ? "actividades" : "examenes";
+        const json = await solicitarJSON(`${API_URL}/${ruta}/${evento.id}`, {
+            method: "GET",
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        navegacionMaterias = [
+            { tipo: "estante" },
+            { tipo: "pagina", categoria: evento.tipo === "actividad" ? "actividades" : "examenes", item: json.data }
+        ];
+
+        if (evento.tipo === "actividad") renderizarPaginaActividad(json.data);
+        else renderizarPaginaExamen(json.data);
+    } catch (error) {
+        console.error("Error al abrir el evento del calendario:", error);
+        contenedor.innerHTML = `<p class="libro-error">${error.message}</p>`;
+    }
 }
 
 async function cargarRecomendados() {
