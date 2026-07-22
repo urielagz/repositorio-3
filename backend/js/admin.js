@@ -28,8 +28,16 @@ document.addEventListener("DOMContentLoaded", () => {
     usuarioActual = user;
     document.getElementById("userDisplay").innerText = `${user.nombre} ${user.apellido}`;
 
+    document.getElementById("btnCerrarSesion").addEventListener("click", cerrarSesion);
+
     cargarSolicitudesDocentes();
 });
+
+function cerrarSesion() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "login.html";
+}
 
 // ===================== SOLICITUDES DE DOCENTES =====================
 async function cargarSolicitudesDocentes() {

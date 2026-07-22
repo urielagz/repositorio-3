@@ -460,6 +460,19 @@ body {
 }
 .btn-primary:hover { background-color: var(--primary-hover); }
 
+.btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-dark);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+.btn-secondary:hover { background-color: var(--bg-main); }
+
 /* ===================== Responsive ===================== */
 @media (max-width: 900px) {
     .chat-shell { flex-direction: column; height: auto; }

@@ -31,6 +31,13 @@ function inicializarSocketChat(token) {
     });
 }
 
+function cerrarSesion() {
+    if (socket) socket.disconnect();
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "login.html";
+}
+
 // El backend responde HTML (404 de Express) cuando una ruta no existe;
 // sin esto, .json() falla con "Unexpected token '<'" en vez de decir qué ruta falta.
 async function solicitarJSON(url, opciones) {
@@ -60,6 +67,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (user.rol.toLowerCase() === "admin") {
         document.getElementById("linkAdmin").classList.remove("hidden");
     }
+
+    document.getElementById("btnCerrarSesion").addEventListener("click", cerrarSesion);
 
     inicializarSocketChat(token);
     inicializarTabs();

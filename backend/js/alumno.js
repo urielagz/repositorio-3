@@ -64,12 +64,21 @@ document.addEventListener("DOMContentLoaded", () => {
     usuarioActual = user;
     document.getElementById("userDisplay").innerText = `${user.nombre} ${user.apellido}`;
 
+    document.getElementById("btnCerrarSesion").addEventListener("click", cerrarSesion);
+
     inicializarSocketChat(token);
     inicializarTabs();
     inicializarMaterias();
     inicializarFormulariosChat();
     cargarDashboard();
 });
+
+function cerrarSesion() {
+    if (socket) socket.disconnect();
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "login.html";
+}
 
 // ===================== TABS =====================
 function inicializarTabs() {
