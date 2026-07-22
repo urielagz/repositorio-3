@@ -253,6 +253,7 @@ function cargarVistaMateria(materia) {
         <div class="header-materia">
             <h2>${materia.nombre}</h2>
             <div style="display:flex; gap:0.5rem;">
+                <button id="btnEditarMateria" class="btn-secondary">Editar Materia</button>
                 <button id="btnVerAlumnos" class="btn-secondary">Ver Alumnos</button>
                 <button id="btnNuevoTema" class="btn-primary">+ Nuevo Tema</button>
             </div>
@@ -261,6 +262,7 @@ function cargarVistaMateria(materia) {
     `;
     document.getElementById("btnNuevoTema").addEventListener("click", () => abrirModal("modalTema"));
     document.getElementById("btnVerAlumnos").addEventListener("click", () => abrirModalAlumnos(materia));
+    document.getElementById("btnEditarMateria").addEventListener("click", () => abrirModalEditarMateria(materia));
     obtenerTemas(materia.id_materia);
 }
 
