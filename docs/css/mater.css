@@ -135,6 +135,15 @@ body {
     border-radius: 6px;
     background: var(--bg-main);
 }
+.link-descarga {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+    font-size: 0.85rem;
+}
 
 /* Botones y Formularios */
 .btn-primary {

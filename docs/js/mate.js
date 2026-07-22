@@ -359,6 +359,7 @@ function crearTemaCard(tema) {
                 <button type="button" class="btn-secondary btn-eliminar-tema" data-id-tema="${tema.id_tema}">Eliminar tema</button>
                 <button type="button" class="btn-secondary btn-nueva-actividad" data-id-tema="${tema.id_tema}">Nueva actividad</button>
                 <button type="button" class="btn-secondary btn-nuevo-examen" data-id-tema="${tema.id_tema}">Nuevo examen</button>
+                <button type="button" class="btn-secondary btn-nuevo-recurso" data-id-tema="${tema.id_tema}">Nuevo recurso</button>
             </div>
         </div>
         <p>${tema.descripcion || ""}</p>
@@ -369,6 +370,7 @@ function crearTemaCard(tema) {
     card.querySelector(".btn-eliminar-tema").addEventListener("click", () => eliminarTema(tema));
     card.querySelector(".btn-nueva-actividad").addEventListener("click", (e) => abrirModalActividad(e.target.dataset.idTema));
     card.querySelector(".btn-nuevo-examen").addEventListener("click", (e) => abrirModalExamen(e.target.dataset.idTema));
+    card.querySelector(".btn-nuevo-recurso").addEventListener("click", (e) => abrirModalRecurso(e.target.dataset.idTema));
     return card;
 }
 
@@ -734,24 +736,131 @@ async function cargarRecursosTema(idTema) {
     if (!contenedor) return;
     try {
         const token = localStorage.getItem("token");
-        const [respActividades, respExamenes] = await Promise.all([
+        const [respRecursos, respActividades, respExamenes] = await Promise.all([
+            fetch(`${API_URL}/recursos/tema/${idTema}`, { headers: { "Authorization": `Bearer ${token}` } }),
             fetch(`${API_URL}/actividades/tema/${idTema}`, { headers: { "Authorization": `Bearer ${token}` } }),
             fetch(`${API_URL}/examenes/tema/${idTema}`, { headers: { "Authorization": `Bearer ${token}` } })
         ]);
+        const jsonRecursos = await respRecursos.json();
         const jsonActividades = await respActividades.json();
         const jsonExamenes = await respExamenes.json();
+        const recursos = (respRecursos.ok && jsonRecursos.ok) ? jsonRecursos.data : [];
         const actividades = (respActividades.ok && jsonActividades.ok) ? jsonActividades.data : [];
         const examenes = (respExamenes.ok && jsonExamenes.ok) ? jsonExamenes.data : [];
 
         contenedor.innerHTML = "";
+        recursos.forEach(recurso => contenedor.appendChild(crearItemRecurso(recurso, idTema)));
         actividades.forEach(actividad => contenedor.appendChild(crearItemActividad(actividad, idTema)));
         examenes.forEach(examen => contenedor.appendChild(crearItemExamen(examen, idTema)));
-        if (actividades.length === 0 && examenes.length === 0) {
-            contenedor.innerHTML = `<div class="item-recurso">Sin actividades ni exámenes aún.</div>`;
+        if (recursos.length === 0 && actividades.length === 0 && examenes.length === 0) {
+            contenedor.innerHTML = `<div class="item-recurso">Sin recursos, actividades ni exámenes aún.</div>`;
         }
     } catch (error) {
         console.error("Error al obtener recursos del tema:", error);
         contenedor.innerHTML = `<div class="item-recurso">Error al cargar recursos.</div>`;
+    }
+}
+
+function crearItemRecurso(recurso, idTema) {
+    const item = document.createElement("div");
+    item.className = "item-recurso";
+
+    const archivosHtml = (recurso.archivos || []).map((archivo, indice) =>
+        `<button type="button" class="link-descarga" data-id-recurso="${recurso.id_recurso}" data-indice="${indice}">${escaparHtml(archivo.nombre_original || "Archivo")}</button>`
+    ).join("<br>");
+
+    item.innerHTML = `
+        <strong> ${escaparHtml(recurso.titulo)}</strong>
+        <p>${escaparHtml(recurso.descripcion || "")}</p>
+        ${archivosHtml ? `<div>${archivosHtml}</div>` : ""}
+        <div>
+            <button type="button" class="btn-secondary btn-eliminar-recurso">Eliminar</button>
+        </div>
+    `;
+    item.querySelectorAll(".link-descarga").forEach(boton => {
+        boton.addEventListener("click", () => descargarRecurso(boton.dataset.idRecurso, boton.dataset.indice));
+    });
+    item.querySelector(".btn-eliminar-recurso").addEventListener("click", () => eliminarRecurso(recurso, idTema));
+    return item;
+}
+
+// GET /recursos/:id/descargar/:indice está protegido con JWT, así que no
+// se puede usar un <a href> normal -- se pide con el token y se abre desde
+// un blob (mismo patrón que verArchivoDocente en admin.js).
+async function descargarRecurso(idRecurso, indice) {
+    try {
+        const token = localStorage.getItem("token");
+        const respuesta = await fetch(`${API_URL}/recursos/${idRecurso}/descargar/${indice}`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!respuesta.ok) throw new Error("No se pudo descargar el archivo.");
+        const blob = await respuesta.blob();
+        const nombre = respuesta.headers.get("content-disposition")?.match(/filename="?([^"]+)"?/)?.[1];
+        const url = URL.createObjectURL(blob);
+        const enlace = document.createElement("a");
+        enlace.href = url;
+        enlace.download = nombre || "archivo";
+        enlace.click();
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error("Error al descargar recurso:", error);
+        alert(error.message);
+    }
+}
+
+async function crearRecurso(event) {
+    event.preventDefault();
+    if (!idTemaModalActual) return;
+    const titulo = document.getElementById("recTitulo").value.trim();
+    if (!titulo) return;
+
+    const boton = event.target.querySelector('button[type="submit"]');
+    if (boton) boton.disabled = true;
+
+    try {
+        const token = localStorage.getItem("token");
+        const formData = new FormData();
+        formData.append("titulo", titulo);
+        formData.append("descripcion", document.getElementById("recDescripcion").value.trim());
+        formData.append("id_tema", idTemaModalActual);
+        const archivos = document.getElementById("recArchivos").files;
+        for (let i = 0; i < archivos.length; i++) {
+            formData.append("archivos", archivos[i]);
+        }
+
+        const respuesta = await fetch(`${API_URL}/recursos`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${token}` },
+            body: formData
+        });
+        const json = await respuesta.json();
+        if (!respuesta.ok || !json.ok) throw new Error(json.mensaje || `Error del servidor (${respuesta.status})`);
+        document.getElementById("formRecurso").reset();
+        cerrarModal(document.getElementById("modalRecurso"));
+        cargarRecursosTema(idTemaModalActual);
+    } catch (error) {
+        console.error("Error al crear recurso:", error);
+        alert(error.message);
+    } finally {
+        if (boton) boton.disabled = false;
+    }
+}
+
+async function eliminarRecurso(recurso, idTema) {
+    const confirmado = confirm(`¿Eliminar el recurso "${recurso.titulo}"? Esta acción no se puede deshacer.`);
+    if (!confirmado) return;
+    try {
+        const token = localStorage.getItem("token");
+        const respuesta = await fetch(`${API_URL}/recursos/${recurso.id_recurso}`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const json = await respuesta.json();
+        if (!respuesta.ok || !json.ok) throw new Error(json.mensaje || `Error del servidor (${respuesta.status})`);
+        cargarRecursosTema(idTema);
+    } catch (error) {
+        console.error("Error al eliminar recurso:", error);
+        alert(error.message);
     }
 }
 
@@ -763,6 +872,12 @@ function abrirModalActividad(idTema) {
 function abrirModalExamen(idTema) {
     idTemaModalActual = idTema;
     abrirModal("modalExamen");
+}
+
+function abrirModalRecurso(idTema) {
+    idTemaModalActual = idTema;
+    document.getElementById("formRecurso").reset();
+    abrirModal("modalRecurso");
 }
 
 function inicializarModales() {
@@ -782,6 +897,7 @@ function inicializarModales() {
     document.getElementById("formEditarExamen").addEventListener("submit", guardarEdicionExamen);
     document.getElementById("formActividad").addEventListener("submit", crearActividad);
     document.getElementById("formEditarActividad").addEventListener("submit", guardarEdicionActividad);
+    document.getElementById("formRecurso").addEventListener("submit", crearRecurso);
     document.getElementById("btnCopiarToken").addEventListener("click", copiarToken);
 }
 

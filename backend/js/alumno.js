@@ -331,10 +331,33 @@ function abrirPagina(item) {
     else renderizarPaginaExamen(item);
 }
 
-function renderizarPaginaExplicacion(tema) {
+async function renderizarPaginaExplicacion(tema) {
     const contenedor = document.getElementById("materiasContenido");
     const imagenes = [tema.imagen1, tema.imagen2].filter(Boolean)
         .map(ruta => `<img src="${API_URL}/uploads/${ruta}" alt="">`).join("");
+
+    let recursos = [];
+    try {
+        const token = localStorage.getItem("token");
+        const json = await solicitarJSON(`${API_URL}/recursos/tema/${tema.id_tema}`, {
+            method: "GET",
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        recursos = json.data || [];
+    } catch (error) {
+        console.error("No se pudieron cargar los recursos del tema:", error);
+    }
+
+    const recursosHtml = recursos.map(recurso => `
+        <div class="recurso-alumno">
+            <strong>${escaparHtml(recurso.titulo)}</strong>
+            ${recurso.descripcion ? `<p>${escaparHtml(recurso.descripcion)}</p>` : ""}
+            ${(recurso.archivos || []).map((archivo, indice) =>
+                `<button type="button" class="link-descarga" data-id-recurso="${recurso.id_recurso}" data-indice="${indice}">${escaparHtml(archivo.nombre_original || "Archivo")}</button>`
+            ).join("<br>")}
+        </div>
+    `).join("");
+
     contenedor.innerHTML = `
         <button type="button" class="separador-btn" id="btnVolverMaterias">← Volver</button>
         <div class="pagina-libro">
@@ -343,9 +366,37 @@ function renderizarPaginaExplicacion(tema) {
             ${imagenes}
             ${tema.contenido ? `<div class="pagina-texto">${escaparHtml(tema.contenido)}</div>` : ""}
             ${!tema.introduccion && !tema.contenido ? `<p class="pagina-texto">Tu docente todavía no agregó contenido para este tema.</p>` : ""}
+            ${recursosHtml ? `<h3 style="margin-top:1.5rem;">Recursos</h3>${recursosHtml}` : ""}
         </div>
     `;
     document.getElementById("btnVolverMaterias").addEventListener("click", volverMateriaAtras);
+    contenedor.querySelectorAll(".link-descarga").forEach(boton => {
+        boton.addEventListener("click", () => descargarRecurso(boton.dataset.idRecurso, boton.dataset.indice));
+    });
+}
+
+// GET /recursos/:id/descargar/:indice está protegido con JWT, así que no
+// se puede usar un <a href> normal -- se pide con el token y se abre desde
+// un blob (mismo patrón que en mate.js).
+async function descargarRecurso(idRecurso, indice) {
+    try {
+        const token = localStorage.getItem("token");
+        const respuesta = await fetch(`${API_URL}/recursos/${idRecurso}/descargar/${indice}`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!respuesta.ok) throw new Error("No se pudo descargar el archivo.");
+        const blob = await respuesta.blob();
+        const nombre = respuesta.headers.get("content-disposition")?.match(/filename="?([^"]+)"?/)?.[1];
+        const url = URL.createObjectURL(blob);
+        const enlace = document.createElement("a");
+        enlace.href = url;
+        enlace.download = nombre || "archivo";
+        enlace.click();
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error("Error al descargar recurso:", error);
+        alert(error.message);
+    }
 }
 
 function renderizarPaginaExamen(examen) {
