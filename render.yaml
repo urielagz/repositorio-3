@@ -13,9 +13,7 @@ services:
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
-      - key: EMAIL_USER
-        sync: false
-      - key: EMAIL_PASS
+      - key: RESEND_API_KEY
         sync: false
       - key: ADMIN_EMAIL
         sync: false

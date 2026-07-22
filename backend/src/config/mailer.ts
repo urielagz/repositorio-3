@@ -1,19 +1,15 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-export const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
-    // Sin esto, un SMTP que no responde (ej. el puerto bloqueado en el
-    // hosting) cuelga la conexión indefinidamente -- y como enviarCorreo()
-    // se usa "best-effort" dentro de flujos como crear materia, eso
-    // colgaba la petición HTTP completa en vez de solo fallar el correo.
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 10000,
-});
+// Antes se mandaba por Gmail/SMTP (nodemailer), pero Render bloquea el
+// puerto SMTP saliente en el plan gratis -- toda petición se colgaba
+// hasta el timeout. Resend manda por HTTPS (API normal), que sí sale.
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// Sin un dominio propio verificado en Resend, el remitente tiene que ser
+// este ("sandbox"), y solo se puede mandar correo a la cuenta con la que
+// te registraste en Resend -- no a cualquier alumno/docente todavía. En
+// cuanto haya un dominio verificado, cambiar esto por "algo@tudominio.com".
+const REMITENTE = "Miztontli <onboarding@resend.dev>";
 
 // "content" (buffer en memoria) en vez de "path": los archivos subidos ya
 // no tocan disco local (ver config/uploadAcademico.ts), así que no hay
@@ -29,11 +25,18 @@ export async function enviarCorreo(
     html: string,
     adjuntos?: AdjuntoCorreo[]
 ) {
-    await transporter.sendMail({
-        from: `"Miztontli" <${process.env.EMAIL_USER}>`,
+    const { error } = await resend.emails.send({
+        from: REMITENTE,
         to: destinatario,
         subject: asunto,
         html,
-        attachments: adjuntos,
+        attachments: adjuntos?.map(adjunto => ({
+            filename: adjunto.filename,
+            content: adjunto.content
+        }))
     });
+
+    if (error) {
+        throw new Error(error.message || "Falló el envío del correo con Resend.");
+    }
 }

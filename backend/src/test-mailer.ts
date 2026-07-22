@@ -3,10 +3,13 @@ import { enviarCorreo } from "./config/mailer";
 
 async function probar() {
     try {
+        // Sin dominio verificado en Resend, solo se puede mandar a la
+        // cuenta con la que te registraste ahí -- por eso ADMIN_EMAIL y
+        // no un correo cualquiera.
         await enviarCorreo(
-            process.env.EMAIL_USER as string, // se lo manda a sí mismo para probar
-            "Prueba de Nodemailer - Miztontli",
-            "<p>Si recibiste esto, la contraseña de aplicación de Gmail funciona correctamente.</p>"
+            process.env.ADMIN_EMAIL as string,
+            "Prueba de Resend - Miztontli",
+            "<p>Si recibiste esto, la integración con Resend funciona correctamente.</p>"
         );
         console.log("✅ Correo enviado correctamente. Revisa tu bandeja de entrada.");
     } catch (error) {
