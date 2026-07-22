@@ -1,4 +1,4 @@
-const API_URL = "https://PENDIENTE-URL-RENDER.onrender.com";
+const API_URL = "https://miztontli-backend.onrender.com";
 const INTERVALO_POLLING_MS = 8000;
 
 const MAX_ARCHIVOS_MENSAJE = 5;

@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatMessages = document.getElementById('chatMessages');
     const userRoleInput = document.getElementById('userRole');
 
-    const API_URL = 'https://PENDIENTE-URL-RENDER.onrender.com/api/publicaciones';
+    const API_URL = 'https://miztontli-backend.onrender.com/api/publicaciones';
 
     chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();

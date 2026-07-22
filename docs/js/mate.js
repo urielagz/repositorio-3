@@ -1,4 +1,4 @@
-const API_URL = "https://PENDIENTE-URL-RENDER.onrender.com";
+const API_URL = "https://miztontli-backend.onrender.com";
 
 let usuarioActual = null;
 let materiaActual = null;

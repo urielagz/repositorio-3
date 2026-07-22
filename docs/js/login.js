@@ -1,5 +1,5 @@
 // ==== CONFIGURACIÓN DEL BACKEND ====
-const API_URL = "https://PENDIENTE-URL-RENDER.onrender.com"; 
+const API_URL = "https://miztontli-backend.onrender.com"; 
 let esModoLogin = true;
 
 // ==== MANEJO DE SESIÓN ====
