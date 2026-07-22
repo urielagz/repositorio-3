@@ -637,6 +637,9 @@ body {
 .archivo-card-badge.archivo-video { background: #db2777; }
 .archivo-card-badge.archivo-audio { background: #0d9488; }
 .archivo-card-badge.archivo-zip { background: #78716c; }
+.archivo-card-badge.archivo-codigo { background: #4f46e5; }
+.archivo-card-badge.archivo-diseno { background: #c026d3; }
+.archivo-card-badge.archivo-3d { background: #0891b2; }
 .archivo-card-badge.archivo-otro { background: #64748b; }
 
 .archivo-card-info {

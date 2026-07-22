@@ -16,11 +16,14 @@ const storage = multer.memoryStorage();
 // un solo cambio aquí actualiza los 4 flujos de subida.
 const EXTENSIONES_PERMITIDAS = [
     // documentos
-    ".pdf", ".doc", ".docx", ".txt", ".rtf", ".odt", ".epub", ".mobi",
+    ".pdf", ".doc", ".docx", ".docm", ".dot", ".dotx", ".dotm",
+    ".txt", ".rtf", ".odt", ".wps", ".pages", ".tex", ".md",
+    ".epub", ".mobi", ".azw", ".azw3", ".fb2", ".djvu",
+    ".xps", ".oxps", ".ps", ".ini", ".cfg", ".log",
     // presentaciones
     ".ppt", ".pptx", ".odp", ".key",
     // hojas de cálculo
-    ".xls", ".xlsx", ".csv", ".ods",
+    ".xls", ".xlsx", ".csv", ".tsv", ".ods",
     // imágenes
     ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg",
     // audio
@@ -29,10 +32,11 @@ const EXTENSIONES_PERMITIDAS = [
     ".mp4", ".avi", ".mov", ".wmv", ".mkv", ".webm",
     // comprimidos
     ".zip", ".rar", ".7z", ".tar", ".gz",
-    // código
-    ".java", ".py", ".cpp", ".c", ".cs", ".js", ".ts", ".html", ".css", ".php", ".sql", ".json", ".xml",
+    // código / marcado
+    ".java", ".py", ".cpp", ".c", ".cs", ".js", ".ts", ".php", ".sql",
+    ".json", ".xml", ".yaml", ".yml", ".html", ".htm", ".mht", ".mhtml", ".css",
     // diseño
-    ".psd", ".ai", ".fig", ".xd",
+    ".psd", ".ai", ".fig", ".xd", ".indd",
     // modelos 3D
     ".stl", ".obj", ".fbx"
 ];
@@ -110,15 +114,23 @@ export function clasificarTipo(extension: string): string {
     const ext = extension.toLowerCase().replace(".", "");
 
     if (ext === "pdf") return "pdf";
-    if (["doc", "docx", "txt", "rtf", "odt", "epub", "mobi"].includes(ext)) return "documento";
+    if ([
+        "doc", "docx", "docm", "dot", "dotx", "dotm",
+        "txt", "rtf", "odt", "wps", "pages", "tex", "md",
+        "epub", "mobi", "azw", "azw3", "fb2", "djvu",
+        "xps", "oxps", "ps", "ini", "cfg", "log"
+    ].includes(ext)) return "documento";
     if (["ppt", "pptx", "odp", "key"].includes(ext)) return "presentacion";
-    if (["xls", "xlsx", "csv", "ods"].includes(ext)) return "hoja_calculo";
+    if (["xls", "xlsx", "csv", "tsv", "ods"].includes(ext)) return "hoja_calculo";
     if (["jpg", "jpeg", "png", "gif", "bmp", "webp", "svg"].includes(ext)) return "imagen";
     if (["mp3", "wav", "ogg", "m4a", "aac"].includes(ext)) return "audio";
     if (["mp4", "avi", "mov", "wmv", "mkv", "webm"].includes(ext)) return "video";
     if (["zip", "rar", "7z", "tar", "gz"].includes(ext)) return "comprimido";
-    if (["java", "py", "cpp", "c", "cs", "js", "ts", "html", "css", "php", "sql", "json", "xml"].includes(ext)) return "codigo";
-    if (["psd", "ai", "fig", "xd"].includes(ext)) return "diseno";
+    if ([
+        "java", "py", "cpp", "c", "cs", "js", "ts", "php", "sql",
+        "json", "xml", "yaml", "yml", "html", "htm", "mht", "mhtml", "css"
+    ].includes(ext)) return "codigo";
+    if (["psd", "ai", "fig", "xd", "indd"].includes(ext)) return "diseno";
     if (["stl", "obj", "fbx"].includes(ext)) return "modelo_3d";
 
     return "otro";

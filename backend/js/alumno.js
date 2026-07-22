@@ -535,13 +535,24 @@ function quitarArchivoEntrega(indice) {
 function categorizarArchivoCliente(nombre) {
     const ext = (nombre.split(".").pop() || "").toLowerCase();
     if (ext === "pdf") return { etiqueta: "PDF", clase: "archivo-pdf" };
-    if (["doc", "docx", "txt", "rtf", "odt"].includes(ext)) return { etiqueta: "DOC", clase: "archivo-doc" };
-    if (["xls", "xlsx", "csv", "ods"].includes(ext)) return { etiqueta: "XLS", clase: "archivo-xls" };
-    if (["ppt", "pptx", "odp"].includes(ext)) return { etiqueta: "PPT", clase: "archivo-ppt" };
+    if ([
+        "doc", "docx", "docm", "dot", "dotx", "dotm",
+        "txt", "rtf", "odt", "wps", "pages", "tex", "md",
+        "epub", "mobi", "azw", "azw3", "fb2", "djvu",
+        "xps", "oxps", "ps", "ini", "cfg", "log"
+    ].includes(ext)) return { etiqueta: "DOC", clase: "archivo-doc" };
+    if (["xls", "xlsx", "csv", "tsv", "ods"].includes(ext)) return { etiqueta: "XLS", clase: "archivo-xls" };
+    if (["ppt", "pptx", "odp", "key"].includes(ext)) return { etiqueta: "PPT", clase: "archivo-ppt" };
     if (["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"].includes(ext)) return { etiqueta: "IMG", clase: "archivo-img" };
     if (["mp4", "avi", "mov", "wmv", "mkv", "webm"].includes(ext)) return { etiqueta: "VIDEO", clase: "archivo-video" };
-    if (["mp3", "wav", "ogg", "m4a"].includes(ext)) return { etiqueta: "AUDIO", clase: "archivo-audio" };
+    if (["mp3", "wav", "ogg", "m4a", "aac"].includes(ext)) return { etiqueta: "AUDIO", clase: "archivo-audio" };
     if (["zip", "rar", "7z", "tar", "gz"].includes(ext)) return { etiqueta: "ZIP", clase: "archivo-zip" };
+    if ([
+        "java", "py", "cpp", "c", "cs", "js", "ts", "php", "sql",
+        "json", "xml", "yaml", "yml", "html", "htm", "mht", "mhtml", "css"
+    ].includes(ext)) return { etiqueta: "CODE", clase: "archivo-codigo" };
+    if (["psd", "ai", "fig", "xd", "indd"].includes(ext)) return { etiqueta: "DSN", clase: "archivo-diseno" };
+    if (["stl", "obj", "fbx"].includes(ext)) return { etiqueta: "3D", clase: "archivo-3d" };
     return { etiqueta: "FILE", clase: "archivo-otro" };
 }
 
