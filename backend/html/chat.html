@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miztontli | Docente</title>
+
+    <link rel="stylesheet" href="../css/mater.css">
+</head>
+<body>
+
+    <!-- ==========================
+            NAVBAR SUPERIOR
+    =========================== -->
+
+    <header class="topbar">
+
+        <div class="logo">
+
+            <h2>Miztontli</h2>
+            <span>Docente</span>
+
+        </div>
+
+        <nav class="menu">
+
+            <a href="materias.html" class="activo">
+                Materias
+            </a>
+
+            <a href="comunidad.html">
+                 Comunidad
+            </a>
+
+            <a href="perfil.html">
+                Perfil
+            </a>
+
+        </nav>
+
+        <div class="usuario">
+
+            <div class="usuario-info">
+
+                <span id="userDisplay">
+                    Cargando...
+                </span>
+
+                <small>
+                    Docente
+                </small>
+
+            </div>
+
+            <button id="btnCerrarSesion" class="btn-salir">
+                Cerrar sesión
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- ==========================
+            CONTENIDO
+    =========================== -->
+
+    <div class="dashboard-container">
+
+        <!-- ========= SIDEBAR ========= -->
+
+        <aside class="sidebar">
+
+            <div class="sidebar-header">
+
+                <h3>Mis Materias</h3>
+
+                <button
+                    id="btnNuevaMateria"
+                    class="btn-icon"
+                    title="Crear materia">
+
+                    +
+
+                </button>
+
+            </div>
+
+            <ul
+                id="listaMaterias"
+                class="nav-list">
+
+            </ul>
+
+        </aside>
+
+
+        <!-- ========= CONTENIDO ========= -->
+
+        <main
+            class="main-content"
+            id="mainContent">
+
+            <div class="welcome-screen">
+
+                <h1>
+
+                    Bienvenido a Miztontli
+
+                </h1>
+
+                <p>
+
+                    Selecciona una materia del panel izquierdo o crea una
+                    nueva para comenzar a administrar temas,
+                    actividades, recursos y exámenes.
+
+                </p>
+
+            </div>
+
+        </main>
+
+    </div>
+
+
+
+
+
+
+
+
+
+    <!-- =======================================================
+                        MODAL MATERIA
+    ======================================================== -->
+
+    <div id="modalMateria" class="modal">
+
+        <div class="modal-content">
+
+            <span class="close-modal">&times;</span>
+
+            <h3>Nueva Materia</h3>
+
+            <form id="formMateria">
+
+                <div class="form-group">
+
+                    <label>Nombre</label>
+
+                    <input
+                        type="text"
+                        id="matNombre"
+                        required>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Código</label>
+
+                    <input
+                        type="text"
+                        id="matCodigo">
+
+                </div>
+
+                <button
+                    class="btn-primary"
+                    type="submit">
+
+                    Guardar
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+
+
+
+
+
+
+    <!-- =======================================================
+                        MODAL TEMA
+    ======================================================== -->
+
+    <div id="modalTema" class="modal">
+
+        <div class="modal-content">
+
+            <span class="close-modal">&times;</span>
+
+            <h3>Nuevo Tema</h3>
+
+            <form id="formTema">
+
+                <div class="form-group">
+
+                    <label>Nombre</label>
+
+                    <input
+                        type="text"
+                        id="temaNombre"
+                        required>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Descripción</label>
+
+                    <textarea
+                        id="temaDescripcion"
+                        rows="4"></textarea>
+
+                </div>
+
+                <button
+                    class="btn-primary"
+                    type="submit">
+
+                    Guardar
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+
+
+
+
+
+
+    <!-- =======================================================
+                        MODAL RECURSO
+    ======================================================== -->
+
+    <div id="modalRecurso" class="modal">
+
+        <div class="modal-content">
+
+            <span class="close-modal">&times;</span>
+
+            <h3>Nuevo Recurso</h3>
+
+            <form id="formRecurso" enctype="multipart/form-data">
+
+                <div class="form-group">
+
+                    <label>Título</label>
+
+                    <input
+                        type="text"
+                        id="recTitulo"
+                        required>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Descripción</label>
+
+                    <textarea
+                        id="recDescripcion"
+                        rows="4"></textarea>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Archivos</label>
+
+                    <input
+                        type="file"
+                        id="recArchivos"
+                        multiple>
+
+                </div>
+
+                <button
+                    class="btn-primary"
+                    type="submit">
+
+                    Publicar
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+
+
+
+
+
+
+    <!-- =======================================================
+                        MODAL EXAMEN
+    ======================================================== -->
+
+    <div id="modalExamen" class="modal">
+
+        <div class="modal-content">
+
+            <span class="close-modal">&times;</span>
+
+            <h3>Nuevo Examen</h3>
+
+            <form id="formExamen">
+
+                <div class="form-group">
+
+                    <label>Título</label>
+
+                    <input
+                        id="exTitulo"
+                        type="text"
+                        required>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Formulario</label>
+
+                    <input
+                        id="exUrlFormulario"
+                        type="url"
+                        required>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Descripción</label>
+
+                    <textarea
+                        id="exDescripcion"></textarea>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Fecha límite</label>
+
+                    <input
+                        id="exFecha"
+                        type="datetime-local">
+
+                </div>
+
+                <button
+                    class="btn-primary"
+                    type="submit">
+
+                    Guardar
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+
+
+
+
+
+
+    <!-- =======================================================
+                        MODAL ACTIVIDAD
+    ======================================================== -->
+
+    <div id="modalActividad" class="modal">
+
+        <div class="modal-content">
+
+            <span class="close-modal">&times;</span>
+
+            <h3>Nueva Actividad</h3>
+
+            <form
+                id="formActividad"
+                enctype="multipart/form-data">
+
+                <div class="form-group">
+
+                    <label>Título</label>
+
+                    <input
+                        id="actTitulo"
+                        type="text"
+                        required>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Descripción</label>
+
+                    <textarea
+                        id="actDescripcion"></textarea>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Fecha límite</label>
+
+                    <input
+                        id="actFecha"
+                        type="datetime-local">
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Puntaje</label>
+
+                    <input
+                        id="actPuntaje"
+                        type="number">
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Archivos</label>
+
+                    <input
+                        id="actArchivos"
+                        type="file"
+                        multiple>
+
+                </div>
+
+                <button
+                    class="btn-primary"
+                    type="submit">
+
+                    Guardar
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <script src="../js/mate.js"></script>
+
+</body>
+</html>

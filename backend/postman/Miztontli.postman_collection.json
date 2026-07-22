@@ -1,0 +1,2307 @@
+{
+    "info": {
+        "_postman_id": "b2f7c6a0-0002-4a2b-8c1d-miztontlicoll002",
+        "name": "Miztontli - Modulo Academico (completo)",
+        "description": "Coleccion end-to-end: registro/login de alumno, solicitud y aprobacion de docente, login admin, modulo academico (Asignatura -> Materia -> Indice -> Tema (capitulo) -> Recurso / Actividad / Entrega / Examen Final), calificaciones, progreso, anuncios y asesorias.\n\nUsa el environment 'Miztontli - Local'. Antes de correr:\n1. Necesitas un usuario ADMIN ya existente en la base de datos (el registro publico solo crea alumnos). Llena correo_admin/password_admin en el environment, o actualiza manualmente el rol de un usuario a 'admin' en Postgres.\n2. Aplica database/migrations/001_modulo_academico.sql y luego database/migrations/migrations_completo.sql antes de probar el modulo academico.\n3. La aprobacion de docente (carpeta 01) envia un correo con la contrasena temporal via Gmail (config/mailer.ts); necesitas EMAIL_USER/EMAIL_PASS configurados en el backend, o revisa la consola/logs del server si el envio falla.\n4. Corre las carpetas en orden (00 a 10). La carpeta 11 (Limpieza) borra todo en cascada, ejecutala solo al final.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+        "type": "noauth"
+    },
+    "item": [
+        {
+            "name": "00. Permisos - casos negativos",
+            "item": [
+                {
+                    "name": "Sin token -> 401",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/materias",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "materias"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Alumno intenta crear materia -> 403",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/materias",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "materias"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"nombre\": \"Materia no autorizada\",\n  \"id_asignatura\": \"{{id_asignatura}}\",\n  \"id_docente\": \"{{id_alumno}}\"\n}"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Alumno intenta eliminar tema -> 403",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/temas/{{id_tema}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "temas",
+                                "{{id_tema}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "01. Auth - Alumno, Docente, Admin",
+            "item": [
+                {
+                    "name": "Registrar alumno",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/usuarios",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "usuarios"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"nombre\": \"Alumno\",\n  \"apellido\": \"Prueba\",\n  \"correo\": \"{{correo_alumno}}\",\n  \"contraseña\": \"{{password_alumno}}\"\n}"
+                        },
+                        "description": "El registro publico SIEMPRE crea rol 'alumno' (hardcodeado en UsuarioController)."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Registro ok', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Login alumno",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "login"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"correo\": \"{{correo_alumno}}\",\n  \"contraseña\": \"{{password_alumno}}\"\n}"
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test('Login ok', function () { pm.expect(json.ok).to.eql(true); });",
+                                    "if (json.ok) {",
+                                    "    pm.environment.set('token_alumno', json.token);",
+                                    "    pm.environment.set('id_alumno', json.data.id_usuario);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Login admin",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "login"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"correo\": \"{{correo_admin}}\",\n  \"contraseña\": \"{{password_admin}}\"\n}"
+                        },
+                        "description": "Requiere un usuario con rol 'admin' ya existente en la base de datos (llena correo_admin/password_admin en el environment)."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test('Login ok', function () { pm.expect(json.ok).to.eql(true); });",
+                                    "if (json.ok) {",
+                                    "    pm.environment.set('token_admin', json.token);",
+                                    "    pm.environment.set('id_admin', json.data.id_usuario);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Solicitar registro docente",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/docentes/solicitud",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "docentes",
+                                "solicitud"
+                            ]
+                        },
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "nombre",
+                                    "value": "Docente",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "apellido",
+                                    "value": "Prueba",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "correo",
+                                    "value": "{{correo_docente}}",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "cedula_profesional",
+                                    "type": "file",
+                                    "src": []
+                                },
+                                {
+                                    "key": "diploma",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "description": "Adjunta manualmente 2 archivos (cedula_profesional y diploma) en Postman antes de enviar."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "if (json.ok) { pm.environment.set('id_solicitud_docente', json.data.id_solicitud); }"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Listar solicitudes pendientes (admin)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/docentes/pendientes",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "docentes",
+                                "pendientes"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Aprobar solicitud docente (admin)",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/docentes/{{id_solicitud_docente}}/aprobar",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "docentes",
+                                "{{id_solicitud_docente}}",
+                                "aprobar"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Envia un correo con la contrasena temporal (requiere EMAIL_USER/EMAIL_PASS configurados). Revisa la bandeja de correo_docente o los logs del server para obtenerla y pegarla en password_docente_temporal."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Rechazar solicitud docente (admin)",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/docentes/{{id_solicitud_docente}}/rechazar",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "docentes",
+                                "{{id_solicitud_docente}}",
+                                "rechazar"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Alternativa a 'Aprobar'. Solo correr una de las dos por solicitud."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Login docente",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "login"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"correo\": \"{{correo_docente}}\",\n  \"contraseña\": \"{{password_docente_temporal}}\"\n}"
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test('Login ok', function () { pm.expect(json.ok).to.eql(true); });",
+                                    "if (json.ok) {",
+                                    "    pm.environment.set('token_docente', json.token);",
+                                    "    pm.environment.set('id_docente', json.data.id_usuario);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Ver mi perfil / usuario por ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/usuarios/{{id_alumno}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "usuarios",
+                                "{{id_alumno}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Actualizar mi perfil",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/usuarios/perfil",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "usuarios",
+                                "perfil"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"nombre\": \"Alumno\",\n  \"apellido\": \"Editado\",\n  \"correo\": \"{{correo_alumno}}\"\n}"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Cambiar contraseña",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/usuarios/cambiar-password",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "usuarios",
+                                "cambiar-password"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"contraseñaActual\": \"{{password_alumno}}\",\n  \"nuevaContraseña\": \"{{password_alumno}}\"\n}"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Olvidé mi contraseña (envía código)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/usuarios/forgot-password",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "usuarios",
+                                "forgot-password"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"correo\": \"{{correo_alumno}}\"\n}"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Restablecer contraseña con código",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/usuarios/reset-password",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "usuarios",
+                                "reset-password"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"token\": \"{{token_recuperacion}}\",\n  \"nuevaContraseña\": \"{{password_alumno}}\"\n}"
+                        },
+                        "description": "El 'token' es el codigo que llega al correo tras 'Olvidé mi contraseña'. Pegalo en la variable token_recuperacion."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Listar usuarios (admin)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/usuarios",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "usuarios"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "02. Asignatura (admin)",
+            "item": [
+                {
+                    "name": "Crear asignatura",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/asignaturas",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "asignaturas"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"nombre\": \"Matematicas\",\n  \"descripcion\": \"Asignatura de matematicas\",\n  \"imagen\": \"matematicas.png\"\n}"
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test('Creada', function () { pm.expect(pm.response.code).to.eql(201); });",
+                                    "if (json.ok) { pm.environment.set('id_asignatura', json.data.id_asignatura); }"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Listar asignaturas",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/asignaturas",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "asignaturas"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Obtener asignatura por ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/asignaturas/{{id_asignatura}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "asignaturas",
+                                "{{id_asignatura}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Actualizar asignatura",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/asignaturas/{{id_asignatura}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "asignaturas",
+                                "{{id_asignatura}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"nombre\": \"Matematicas\",\n  \"descripcion\": \"Asignatura de matematicas (editada)\",\n  \"imagen\": \"matematicas.png\"\n}"
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "03. Materia (docente/admin) + Indice + Examen Final",
+            "item": [
+                {
+                    "name": "Crear materia",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/materias",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "materias"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_docente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"nombre\": \"Algebra\",\n  \"icono\": \"algebra.svg\",\n  \"color\": \"#4F46E5\",\n  \"orden\": 1,\n  \"id_asignatura\": \"{{id_asignatura}}\",\n  \"id_docente\": \"{{id_docente}}\"\n}"
+                        },
+                        "description": "Materia = contenedor simple: solo titulo, imagen (icono) y color opcionales. Ya no lleva descripcion ni nivel_educativo."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test('Creada', function () { pm.expect(pm.response.code).to.eql(201); });",
+                                    "if (json.ok) { pm.environment.set('id_materia', json.data.id_materia); }"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Listar materias",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/materias",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "materias"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Obtener materia por ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/materias/{{id_materia}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "materias",
+                                "{{id_materia}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Materias por asignatura",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/materias/asignatura/{{id_asignatura}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "materias",
+                                "asignatura",
+                                "{{id_asignatura}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Actualizar materia",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/materias/{{id_materia}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "materias",
+                                "{{id_materia}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_docente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"nombre\": \"Algebra\",\n  \"icono\": \"algebra.svg\",\n  \"color\": \"#4338CA\",\n  \"orden\": 1,\n  \"id_asignatura\": \"{{id_asignatura}}\"\n}"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Indice de la materia (temas + examen final)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/materias/{{id_materia}}/indice",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "materias",
+                                "{{id_materia}}",
+                                "indice"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Solo navegacion: no almacena nada, compone temas ordenados + examen final de la materia."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Configurar examen final (crear o actualizar)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/materias/{{id_materia}}/examen",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "materias",
+                                "{{id_materia}}",
+                                "examen"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_docente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"titulo\": \"Examen final de Algebra\",\n  \"descripcion\": \"Responde el formulario antes de la fecha limite del curso.\",\n  \"url_formulario\": \"https://forms.google.com/d/e/ejemplo/viewform\"\n}"
+                        },
+                        "description": "El examen final NO se desarrolla dentro del sistema: solo se guarda titulo + descripcion + URL de Google Forms. Es 1 por materia (upsert)."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Obtener examen final de la materia",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/materias/{{id_materia}}/examen",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "materias",
+                                "{{id_materia}}",
+                                "examen"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Eliminar examen final",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/materias/{{id_materia}}/examen",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "materias",
+                                "{{id_materia}}",
+                                "examen"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_docente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "04. Tema / capitulo (docente/admin)",
+            "item": [
+                {
+                    "name": "Crear tema",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/temas",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "temas"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_docente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"nombre\": \"Variables\",\n  \"descripcion\": \"Que es una variable\",\n  \"orden\": 1,\n  \"id_materia\": \"{{id_materia}}\"\n}"
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test('Creado', function () { pm.expect(pm.response.code).to.eql(201); });",
+                                    "if (json.ok) { pm.environment.set('id_tema', json.data.id_tema); }"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Listar temas",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/temas",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "temas"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Tema por ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/temas/{{id_tema}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "temas",
+                                "{{id_tema}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Temas por materia (ordenados)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/temas/materia/{{id_materia}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "temas",
+                                "materia",
+                                "{{id_materia}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Actualizar tema (titulo/descripcion/orden)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/temas/{{id_tema}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "temas",
+                                "{{id_tema}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_docente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"nombre\": \"Variables\",\n  \"descripcion\": \"Que es una variable (editado)\",\n  \"orden\": 1\n}"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Actualizar contenido del capitulo (introduccion/contenido/imagenes)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/temas/{{id_tema}}/contenido",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "temas",
+                                "{{id_tema}}",
+                                "contenido"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_docente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"introduccion\": \"En este capitulo aprenderas que es una variable y para que sirve.\",\n  \"contenido\": \"<p>Una variable es un espacio en memoria que guarda un valor...</p>\",\n  \"imagen1\": \"https://miapp.com/img/tema1_1.png\",\n  \"imagen2\": \"https://miapp.com/img/tema1_2.png\"\n}"
+                        },
+                        "description": "El tema ahora funciona como el capitulo completo del libro: titulo (nombre) + introduccion + contenido largo + hasta 2 imagenes. Los recursos y actividades siguen colgando de id_tema."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "05. Recurso (docente/admin, Multer)",
+            "item": [
+                {
+                    "name": "Subir recurso",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/recursos",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "recursos"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_docente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "titulo",
+                                    "value": "Guia de variables (PDF)",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "descripcion",
+                                    "value": "Material de apoyo",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "id_tema",
+                                    "value": "{{id_tema}}",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "archivo",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "description": "Adjunta manualmente un archivo (pdf, word, excel, powerpoint, imagen, video, audio, zip, rar, etc.) en el campo 'archivo'."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test('Creado', function () { pm.expect(pm.response.code).to.eql(201); });",
+                                    "if (json.ok) { pm.environment.set('id_recurso', json.data.id_recurso); }"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Recursos por tema",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/recursos/tema/{{id_tema}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "recursos",
+                                "tema",
+                                "{{id_tema}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Recurso por ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/recursos/{{id_recurso}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "recursos",
+                                "{{id_recurso}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Descargar recurso",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/recursos/{{id_recurso}}/descargar",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "recursos",
+                                "{{id_recurso}}",
+                                "descargar"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Actualizar metadatos de recurso",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/recursos/{{id_recurso}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "recursos",
+                                "{{id_recurso}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_docente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"titulo\": \"Guia de variables (editada)\",\n  \"descripcion\": \"Material de apoyo actualizado\"\n}"
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "06. Actividad y Entregas (docente crea/califica, alumno entrega)",
+            "item": [
+                {
+                    "name": "Crear actividad (con archivos de apoyo opcionales)",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/actividades",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "actividades"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_docente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "titulo",
+                                    "value": "Tarea de variables",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "descripcion",
+                                    "value": "Resuelve los ejercicios 1 al 10",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "fecha_limite",
+                                    "value": "2026-12-31T23:59:00.000Z",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "puntaje",
+                                    "value": "10",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "archivos_permitidos",
+                                    "value": "pdf,word,zip,imagen,video,audio,codigo",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "id_tema",
+                                    "value": "{{id_tema}}",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "archivos_apoyo",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "description": "'archivos_apoyo' es opcional y acepta varios archivos (hasta 10) que el docente sube como material de apoyo para la actividad."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test('Creada', function () { pm.expect(pm.response.code).to.eql(201); });",
+                                    "if (json.ok) { pm.environment.set('id_actividad', json.data.id_actividad); }"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Actividades por tema",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/actividades/tema/{{id_tema}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "actividades",
+                                "tema",
+                                "{{id_tema}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Actividad por ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/actividades/{{id_actividad}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "actividades",
+                                "{{id_actividad}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Actualizar actividad (agregar mas archivos de apoyo opcional)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/actividades/{{id_actividad}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "actividades",
+                                "{{id_actividad}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_docente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "titulo",
+                                    "value": "Tarea de variables (editada)",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "descripcion",
+                                    "value": "Resuelve los ejercicios 1 al 10",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "fecha_limite",
+                                    "value": "2026-12-31T23:59:00.000Z",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "puntaje",
+                                    "value": "10",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "archivos_permitidos",
+                                    "value": "pdf,word,zip,imagen,video,audio,codigo",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "archivos_apoyo",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Entregar actividad (alumno)",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/actividades/{{id_actividad}}/entregar",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "actividades",
+                                "{{id_actividad}}",
+                                "entregar"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "comentario",
+                                    "value": "Aqui esta mi tarea",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "archivo",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "description": "El alumno adjunta un archivo (cualquier tipo) y opcionalmente un comentario. Vuelve a llamar este endpoint para re-entregar (upsert por alumno+actividad)."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test('Entregada', function () { pm.expect(pm.response.code).to.eql(201); });",
+                                    "if (json.ok) { pm.environment.set('id_entrega', json.data.id_registro); }"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Ver entregas de la actividad (docente)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/actividades/{{id_actividad}}/entregas",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "actividades",
+                                "{{id_actividad}}",
+                                "entregas"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_docente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Calificar entrega (docente)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/actividades/entregas/{{id_entrega}}/calificar",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "actividades",
+                                "entregas",
+                                "{{id_entrega}}",
+                                "calificar"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_docente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"calificacion\": 9.5,\n  \"observaciones_docente\": \"Buen trabajo, revisa el ejercicio 7\"\n}"
+                        },
+                        "description": "observaciones_docente es independiente de comentario_alumno (antes compartian la misma columna y calificar borraba el comentario del alumno)."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Mis entregas (alumno)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/actividades/alumno/mis-entregas",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "actividades",
+                                "alumno",
+                                "mis-entregas"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "07. Calificacion (reporte agregado)",
+            "item": [
+                {
+                    "name": "Mis calificaciones en la materia (alumno)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/calificaciones/materia/{{id_materia}}/mis-calificaciones",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "calificaciones",
+                                "materia",
+                                "{{id_materia}}",
+                                "mis-calificaciones"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Calificaciones de toda la materia (docente)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/calificaciones/materia/{{id_materia}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "calificaciones",
+                                "materia",
+                                "{{id_materia}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_docente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "08. Progreso",
+            "item": [
+                {
+                    "name": "Mi progreso en la materia (alumno)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/progreso/materia/{{id_materia}}/mi-progreso",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "progreso",
+                                "materia",
+                                "{{id_materia}}",
+                                "mi-progreso"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_alumno}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Progreso de todos los alumnos en la materia (docente)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/progreso/materia/{{id_materia}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "progreso",
+                                "materia",
+                                "{{id_materia}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_docente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "09. Anuncios",
+            "item": [
+                {
+                    "name": "Listar anuncios",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/anuncios",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "anuncios"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Crear anuncio",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/anuncios",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "anuncios"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"titulo\": \"Mantenimiento programado\",\n  \"descripcion\": \"El sistema no estara disponible el sabado de 2am a 4am.\",\n  \"fecha\": \"2026-07-20T02:00:00.000Z\"\n}"
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "if (json.ok) { pm.environment.set('id_anuncio', json.data.id_publicacion); }"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Eliminar anuncio",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/anuncios/{{id_anuncio}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "anuncios",
+                                "{{id_anuncio}}"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "10. Asesorias",
+            "item": [
+                {
+                    "name": "Listar asesorias",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/asesorias",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "asesorias"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Crear asesoria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/asesorias",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "asesorias"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"docente\": \"Prof. Garcia\",\n  \"fecha\": \"2026-07-25T18:00:00.000Z\",\n  \"hora\": \"18:00\",\n  \"enlace\": \"https://meet.google.com/ejemplo\"\n}"
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "if (json.ok) { pm.environment.set('id_asesoria', json.data.id_publicacion); }"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Eliminar asesoria",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/asesorias/{{id_asesoria}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "asesorias",
+                                "{{id_asesoria}}"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "11. Limpieza (eliminar todo, correr al final)",
+            "item": [
+                {
+                    "name": "Eliminar examen final",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/materias/{{id_materia}}/examen",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "materias",
+                                "{{id_materia}}",
+                                "examen"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_docente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Eliminar actividad",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/actividades/{{id_actividad}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "actividades",
+                                "{{id_actividad}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_docente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Eliminar recurso",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/recursos/{{id_recurso}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "recursos",
+                                "{{id_recurso}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_docente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Eliminar tema",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/temas/{{id_tema}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "temas",
+                                "{{id_tema}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_docente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Eliminar materia",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/materias/{{id_materia}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "materias",
+                                "{{id_materia}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_docente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Eliminar asignatura (admin)",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/asignaturas/{{id_asignatura}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "asignaturas",
+                                "{{id_asignatura}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Eliminar usuario alumno de prueba",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/usuarios/{{id_alumno}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "usuarios",
+                                "{{id_alumno}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ]
+}

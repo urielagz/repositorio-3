@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miztontli - Panel del Docente</title>
+    <link rel="stylesheet" href="../css/panel.css">
+</head>
+<body>
+    <header class="navbar-panel">
+        <div class="logo">Miztontli <span>Docente</span></div>
+        <nav class="tabs-nav" id="tabsNav">
+            <button type="button" class="tab-btn active" data-tab="materias">Materias</button>
+            <button type="button" class="tab-btn" data-tab="comunidad">Comunidad</button>
+            <button type="button" class="tab-btn" data-tab="perfil">Perfil</button>
+        </nav>
+        <div class="user-profile" id="userDisplay">Cargando usuario...</div>
+    </header>
+
+    <main class="panel-content">
+        <!-- ===================== MATERIAS ===================== -->
+        <section id="tab-materias" class="tab-panel active">
+            <iframe id="iframeMaterias" class="materias-frame" src="materias.html" title="Panel de Materias"></iframe>
+        </section>
+
+        <!-- ===================== COMUNIDAD ===================== -->
+        <section id="tab-comunidad" class="tab-panel">
+            <div class="chat-shell">
+                <!-- Panel lateral: selector de chats -->
+                <aside class="chat-sidebar">
+                    <div class="chat-sidebar-group">
+                        <span class="chat-sidebar-label">Chat de la Escuela</span>
+                        <ul id="listaChatsEscuela" class="chat-sidebar-list">
+                            <li class="chat-sidebar-vacio">Cargando...</li>
+                        </ul>
+                    </div>
+                    <div class="chat-sidebar-group">
+                        <span class="chat-sidebar-label">Chat Global</span>
+                        <ul id="listaChatsGlobal" class="chat-sidebar-list">
+                            <li class="chat-sidebar-vacio">Cargando...</li>
+                        </ul>
+                    </div>
+                </aside>
+
+                <!-- Conversación activa -->
+                <section class="chat-activo">
+                    <div class="chat-activo-header">
+                        <h3 id="chatActivoNombre">Selecciona un chat</h3>
+                    </div>
+
+                    <div class="chat-mensajes" id="chatMensajes">
+                        <p class="chat-vacio">Elige un chat de la lista para comenzar.</p>
+                    </div>
+
+                    <!-- Barra de "respondiendo a" -->
+                    <div class="chat-reply-bar hidden" id="chatReplyBar">
+                        <div class="chat-reply-info">
+                            <strong id="chatReplyAutor"></strong>
+                            <span id="chatReplyTexto"></span>
+                        </div>
+                        <button type="button" class="chat-reply-cancelar" id="btnCancelarReply" title="Cancelar respuesta">&times;</button>
+                    </div>
+
+                    <!-- Previsualización de adjuntos pendientes -->
+                    <div class="chat-adjuntos-preview hidden" id="chatAdjuntosPreview"></div>
+
+                    <form class="chat-form" id="formChatActivo">
+                        <div class="chat-attach-wrapper">
+                            <button type="button" class="chat-attach-btn" id="btnAdjuntar" title="Adjuntar"></button>
+                            <div class="chat-attach-menu hidden" id="menuAdjuntar">
+                                <button type="button" data-tipo="foto"> <span>Fotos</span></button>
+                                <button type="button" data-tipo="video"> <span>Video</span></button>
+                                <button type="button" data-tipo="documento"> <span>Documento</span></button>
+                            </div>
+                        </div>
+                        <input type="file" id="inputFoto" class="chat-file-input" accept="image/*" multiple>
+                        <input type="file" id="inputVideo" class="chat-file-input" accept="video/*" multiple>
+                        <input type="file" id="inputDocumento" class="chat-file-input" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" multiple>
+                        <input type="text" id="inputMensaje" placeholder="Escribe un mensaje..." autocomplete="off">
+                        <button type="submit" class="btn-primary">Enviar</button>
+                    </form>
+                </section>
+            </div>
+        </section>
+
+        <!-- ===================== PERFIL ===================== -->
+        <section id="tab-perfil" class="tab-panel">
+            <div class="perfil-card" id="perfilCard">
+                <p>Cargando perfil...</p>
+            </div>
+        </section>
+    </main>
+
+    <script src="../js/panel.js"></script>
+</body>
+</html>

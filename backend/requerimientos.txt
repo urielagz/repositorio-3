@@ -1,0 +1,100 @@
+=========================================================
+ Miztontli - Backend
+ Requerimientos para instalar y correr el proyecto
+=========================================================
+
+Este es un proyecto Node.js + TypeScript (no Python), así que este
+archivo es solo una guía de referencia: la instalación real de las
+dependencias se hace con "npm install" a partir de package.json, que
+es la fuente de verdad. Aquí se listan versiones exactas para que
+cualquiera pueda verificar que tiene lo mismo que se usó en desarrollo.
+
+---------------------------------------------------------
+1. Requisitos del sistema (instalar antes de clonar)
+---------------------------------------------------------
+- Node.js 18 LTS o superior (se desarrolló con Node 22.x)
+- npm 9 o superior (viene con Node)
+- PostgreSQL 14 o superior
+- Git
+
+---------------------------------------------------------
+2. Dependencias de producción (package.json > dependencies)
+---------------------------------------------------------
+bcrypt          ^6.0.0    Hash de contraseñas
+cors            ^2.8.6    CORS para el frontend
+dotenv          ^17.4.2   Variables de entorno desde .env
+express         ^4.19.2   Framework HTTP
+jsonwebtoken    ^9.0.3    Autenticación con JWT
+multer          ^1.4.5-lts.1   Subida de archivos (multipart/form-data)
+nodemailer      ^9.0.3    Envío de correos (recuperación de contraseña,
+                          aprobación de docente, notificaciones por
+                          materia, avisos importantes)
+pg              ^8.22.0   Cliente de PostgreSQL
+socket.io       ^4.8.3    Chat en tiempo real (público y por materia)
+
+---------------------------------------------------------
+3. Dependencias de desarrollo (package.json > devDependencies)
+---------------------------------------------------------
+typescript          ^5.4.5    Compilador de TypeScript
+ts-node-dev         ^2.0.0    Recarga automática en desarrollo (npm run dev)
+@types/express       ^5.0.0
+@types/bcrypt         ^6.0.0
+@types/jsonwebtoken   ^9.0.10
+@types/multer         ^1.4.12
+@types/node           ^22.20.0
+@types/nodemailer     ^8.0.1
+@types/pg             ^8.20.0
+@types/cors           ^2.8.19   (nota: hoy vive dentro de "dependencies"
+                                 en package.json, no de devDependencies;
+                                 solo se usa en tiempo de compilación)
+
+---------------------------------------------------------
+4. Instalación
+---------------------------------------------------------
+1) Clonar el repositorio y entrar a la carpeta backend/
+2) Instalar todas las dependencias de una vez:
+
+       npm install
+
+3) Crear la base de datos en PostgreSQL (vacía, cualquier nombre).
+4) Aplicar el esquema completo:
+
+       psql -U <usuario> -d <nombre_de_tu_base> -f database/database.sql
+
+   El script es idempotente (usa CREATE ... IF NOT EXISTS), se puede
+   correr varias veces sin romper nada.
+
+5) Configurar la conexión a la base de datos en
+   src/config/database.ts (host, puerto, nombre de la base, usuario,
+   contraseña) -- hoy está escrita directamente ahí, no sale de
+   variables de entorno.
+
+6) Crear un archivo .env en backend/ con:
+
+       PORT=7000
+       UPLOADS_PATH=uploads
+       EMAIL_USER=tu_correo@gmail.com
+       EMAIL_PASS=tu_contraseña_de_aplicacion_de_gmail
+       ADMIN_EMAIL=correo_del_admin@dominio.com
+
+   EMAIL_USER/EMAIL_PASS deben ser una "contraseña de aplicación" de
+   Gmail (no la contraseña normal de la cuenta) -- lo usa
+   src/config/mailer.ts para todo el envío de correos del sistema.
+
+7) Levantar el servidor en modo desarrollo:
+
+       npm run dev
+
+   Debe imprimir "Servidor ejecutándose en puerto 7000" (o el puerto
+   que hayas puesto en PORT). El mismo puerto sirve la API REST y el
+   chat por Socket.IO.
+
+---------------------------------------------------------
+5. Notas
+---------------------------------------------------------
+- La carpeta backend/uploads/ se crea sola en tiempo de ejecución
+  (recursos, entregas, actividades, comunidad, temas, chat) -- no hace
+  falta crearla a mano.
+- database.sql es el único archivo de esquema del proyecto; cualquier
+  cambio de base de datos debe reflejarse ahí.
+- El proyecto no tiene suite de pruebas automatizadas todavía.
