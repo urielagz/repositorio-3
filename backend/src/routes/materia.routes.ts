@@ -46,6 +46,13 @@ router.get(
     MateriaController.obtenerToken
 );
 
+router.get(
+    "/:id/alumnos",
+    authMiddleware,
+    permitirRoles("docente", "admin"),
+    MateriaController.obtenerAlumnos
+);
+
 /*
 ==================================
 INSCRIPCIÓN (alumno se inscribe con el token que recibió el docente)

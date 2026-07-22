@@ -252,6 +252,25 @@ class RepositorioMaterias {
 
     }
 
+    // Roster completo (con apellido y fecha de inscripción) para el panel
+    // del docente -- a diferencia de obtenerAlumnosInscritos(), que solo
+    // trae lo mínimo para mandar correos.
+    async obtenerRosterInscritos(idMateria: number): Promise<{ id_usuario: number; nombre: string; apellido: string; correo: string; fecha_inscripcion: Date }[]> {
+
+        const sql = `
+            SELECT u.id_usuario, u.nombre, u.apellido, u.correo, um.fecha_inscripcion
+            FROM usuario_materia um
+            INNER JOIN Usuario u ON u.id_usuario = um.id_usuario
+            WHERE um.id_materia = $1
+            ORDER BY u.nombre, u.apellido;
+        `;
+
+        const { rows } = await pool.query(sql, [idMateria]);
+
+        return rows;
+
+    }
+
     // Busca la materia por su token de inscripción (columnas públicas,
     // sin exponer el token de vuelta).
     async buscarPorToken(token: string) {

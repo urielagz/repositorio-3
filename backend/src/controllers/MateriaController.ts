@@ -5,6 +5,7 @@ import { repos } from "../repositories";
 import { enviarCorreo } from "../config/mailer";
 import { notificarMateria, correoMateria } from "../utils/notificaciones";
 import RepositorioChat from "../repositories/RepositorioChat";
+import RepositorioProgreso from "../repositories/RepositorioProgreso";
 
 const repoTemas = new RepositorioTemas();
 
@@ -413,6 +414,59 @@ class MateriaController {
                 mensaje: "Error del servidor."
 
             });
+
+        }
+
+    }
+
+    // =====================================================
+    // GET /materias/:id/alumnos  (docente dueño o admin)
+    // Roster de inscritos + su avance calculado, para el panel del
+    // docente ("mis alumnos"). A diferencia de GET /progreso/materia/:id,
+    // incluye a TODOS los inscritos (no solo a quienes ya entregaron algo).
+    // =====================================================
+
+    async obtenerAlumnos(req: any, res: Response) {
+
+        try {
+
+            const id = Number(req.params.id);
+            const usuario = req.usuario;
+
+            if (!Number.isInteger(id)) {
+                return res.status(400).json({ ok: false, mensaje: "ID inválido." });
+            }
+
+            const materia = await RepositorioMaterias.obtenerPorId(id);
+
+            if (!materia) {
+                return res.status(404).json({ ok: false, mensaje: "Materia no encontrada." });
+            }
+
+            if (usuario.rol === "docente") {
+                const propietario = await RepositorioMaterias.esDelDocente(id, usuario.id);
+
+                if (!propietario) {
+                    return res.status(403).json({ ok: false, mensaje: "No puedes ver los alumnos de esta materia." });
+                }
+            }
+
+            const roster = await RepositorioMaterias.obtenerRosterInscritos(id);
+
+            const alumnos = await Promise.all(
+                roster.map(async alumno => ({
+                    ...alumno,
+                    progreso: await RepositorioProgreso.calcularYGuardar(alumno.id_usuario, id)
+                }))
+            );
+
+            return res.status(200).json({ ok: true, total: alumnos.length, data: alumnos });
+
+        } catch (error) {
+
+            console.error(error);
+
+            return res.status(500).json({ ok: false, mensaje: "Error al obtener los alumnos de la materia." });
 
         }
 

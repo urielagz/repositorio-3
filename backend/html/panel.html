@@ -12,6 +12,7 @@
         <nav class="tabs-nav" id="tabsNav">
             <button type="button" class="tab-btn active" data-tab="materias">Materias</button>
             <button type="button" class="tab-btn" data-tab="comunidad">Comunidad</button>
+            <button type="button" class="tab-btn hidden" data-tab="solicitudes" id="tabBtnSolicitudes">Solicitudes de Docentes</button>
             <button type="button" class="tab-btn" data-tab="perfil">Perfil</button>
         </nav>
         <div class="user-profile" id="userDisplay">Cargando usuario...</div>
@@ -80,6 +81,13 @@
                         <button type="submit" class="btn-primary">Enviar</button>
                     </form>
                 </section>
+            </div>
+        </section>
+
+        <!-- ===================== SOLICITUDES DE DOCENTES (solo admin) ===================== -->
+        <section id="tab-solicitudes" class="tab-panel">
+            <div id="listaSolicitudesDocentes">
+                <p>Cargando...</p>
             </div>
         </section>
 

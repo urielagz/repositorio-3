@@ -252,12 +252,68 @@ function cargarVistaMateria(materia) {
     main.innerHTML = `
         <div class="header-materia">
             <h2>${materia.nombre}</h2>
-            <button id="btnNuevoTema" class="btn-primary">+ Nuevo Tema</button>
+            <div style="display:flex; gap:0.5rem;">
+                <button id="btnVerAlumnos" class="btn-secondary">Ver Alumnos</button>
+                <button id="btnNuevoTema" class="btn-primary">+ Nuevo Tema</button>
+            </div>
         </div>
         <div id="listaTemas"></div>
     `;
     document.getElementById("btnNuevoTema").addEventListener("click", () => abrirModal("modalTema"));
+    document.getElementById("btnVerAlumnos").addEventListener("click", () => abrirModalAlumnos(materia));
     obtenerTemas(materia.id_materia);
+}
+
+// ===================== ALUMNOS INSCRITOS + PROGRESO =====================
+async function abrirModalAlumnos(materia) {
+    document.getElementById("alumnosMateriaNombre").textContent = materia.nombre;
+    const contenedor = document.getElementById("listaAlumnos");
+    contenedor.innerHTML = "<p>Cargando...</p>";
+    abrirModal("modalAlumnos");
+
+    try {
+        const token = localStorage.getItem("token");
+        const respuesta = await fetch(`${API_URL}/materias/${materia.id_materia}/alumnos`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const json = await respuesta.json();
+        if (!respuesta.ok || !json.ok) throw new Error(json.mensaje || `Error del servidor (${respuesta.status})`);
+        renderizarAlumnos(json.data || []);
+    } catch (error) {
+        console.error("Error al obtener alumnos:", error);
+        contenedor.innerHTML = `<p>${error.message}</p>`;
+    }
+}
+
+function renderizarAlumnos(alumnos) {
+    const contenedor = document.getElementById("listaAlumnos");
+    if (!alumnos || alumnos.length === 0) {
+        contenedor.innerHTML = "<p>Todavía no hay alumnos inscritos en esta materia.</p>";
+        return;
+    }
+    contenedor.innerHTML = `
+        <table class="tabla-simple">
+            <thead>
+                <tr><th>Alumno</th><th>Correo</th><th>Avance</th><th>Actividades completadas</th></tr>
+            </thead>
+            <tbody>
+                ${alumnos.map(alumno => `
+                    <tr>
+                        <td>${escaparHtml(`${alumno.nombre} ${alumno.apellido || ""}`.trim())}</td>
+                        <td>${escaparHtml(alumno.correo)}</td>
+                        <td>${alumno.progreso ? Number(alumno.progreso.porcentaje_avance).toFixed(0) : 0}%</td>
+                        <td>${alumno.progreso ? alumno.progreso.act_completas : 0}</td>
+                    </tr>
+                `).join("")}
+            </tbody>
+        </table>
+    `;
+}
+
+function escaparHtml(texto) {
+    const div = document.createElement("div");
+    div.textContent = texto ?? "";
+    return div.innerHTML;
 }
 
 async function obtenerTemas(idMateria) {
@@ -421,13 +477,112 @@ function crearItemActividad(actividad, idTema) {
         <strong> ${actividad.titulo}</strong>
         <p>${actividad.descripcion || ""}</p>
         <div>
+            <button type="button" class="btn-secondary btn-ver-entregas">Ver entregas</button>
             <button type="button" class="btn-secondary btn-editar-actividad">Editar</button>
             <button type="button" class="btn-secondary btn-eliminar-actividad">Eliminar</button>
         </div>
     `;
+    item.querySelector(".btn-ver-entregas").addEventListener("click", () => abrirModalEntregas(actividad));
     item.querySelector(".btn-editar-actividad").addEventListener("click", () => abrirModalEditarActividad(actividad, idTema));
     item.querySelector(".btn-eliminar-actividad").addEventListener("click", () => eliminarActividad(actividad, idTema));
     return item;
+}
+
+// ===================== ENTREGAS + CALIFICAR =====================
+async function abrirModalEntregas(actividad) {
+    document.getElementById("entregasActividadTitulo").textContent = actividad.titulo;
+    const contenedor = document.getElementById("listaEntregas");
+    contenedor.innerHTML = "<p>Cargando...</p>";
+    abrirModal("modalEntregas");
+
+    try {
+        const token = localStorage.getItem("token");
+        const respuesta = await fetch(`${API_URL}/actividades/${actividad.id_actividad}/entregas`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const json = await respuesta.json();
+        if (!respuesta.ok || !json.ok) throw new Error(json.mensaje || `Error del servidor (${respuesta.status})`);
+        renderizarEntregas(json.data || [], actividad.puntaje);
+    } catch (error) {
+        console.error("Error al obtener entregas:", error);
+        contenedor.innerHTML = `<p>${error.message}</p>`;
+    }
+}
+
+function renderizarEntregas(entregas, puntajeMaximo) {
+    const contenedor = document.getElementById("listaEntregas");
+    if (!entregas || entregas.length === 0) {
+        contenedor.innerHTML = "<p>Nadie ha entregado esta actividad todavía.</p>";
+        return;
+    }
+    contenedor.innerHTML = "";
+    entregas.forEach(entrega => contenedor.appendChild(crearEntregaItem(entrega, puntajeMaximo)));
+}
+
+function crearEntregaItem(entrega, puntajeMaximo) {
+    const item = document.createElement("div");
+    item.className = "entrega-item";
+
+    const archivosHtml = (entrega.archivos || []).map(archivo =>
+        `<a href="${API_URL}/${archivo.url}" target="_blank" rel="noopener" download>${escaparHtml(archivo.nombre_original || "Archivo")}</a>`
+    ).join("");
+
+    item.innerHTML = `
+        <div class="entrega-header">
+            <strong>${escaparHtml(`${entrega.nombre} ${entrega.apellido || ""}`.trim())}</strong>
+            <span>${entrega.fecha_entrega ? new Date(entrega.fecha_entrega).toLocaleString("es-MX") : ""}</span>
+        </div>
+        ${entrega.comentario_alumno ? `<p>${escaparHtml(entrega.comentario_alumno)}</p>` : ""}
+        ${entrega.url_entrega ? `<p><a href="${escaparHtml(entrega.url_entrega)}" target="_blank" rel="noopener">${escaparHtml(entrega.url_entrega)}</a></p>` : ""}
+        ${archivosHtml ? `<div class="entrega-archivos">${archivosHtml}</div>` : ""}
+        <form class="form-calificar">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Calificación${puntajeMaximo ? ` (de ${puntajeMaximo})` : ""}</label>
+                    <input type="number" step="0.01" min="0" ${puntajeMaximo ? `max="${puntajeMaximo}"` : ""} class="input-calificacion" value="${entrega.calificacion ?? ""}" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Observaciones (opcional)</label>
+                <textarea rows="2" class="input-observaciones">${entrega.observaciones_docente || ""}</textarea>
+            </div>
+            <button type="submit" class="btn-primary">Guardar calificación</button>
+        </form>
+    `;
+
+    item.querySelector(".form-calificar").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const boton = event.target.querySelector('button[type="submit"]');
+        const calificacion = item.querySelector(".input-calificacion").value;
+        const observaciones = item.querySelector(".input-observaciones").value.trim();
+        calificarEntrega(entrega.id_registro, calificacion, observaciones, boton);
+    });
+
+    return item;
+}
+
+async function calificarEntrega(idEntrega, calificacion, observaciones, boton) {
+    if (boton) boton.disabled = true;
+    try {
+        const token = localStorage.getItem("token");
+        const respuesta = await fetch(`${API_URL}/actividades/entregas/${idEntrega}/calificar`, {
+            method: "PUT",
+            headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ calificacion: Number(calificacion), observaciones_docente: observaciones })
+        });
+        const json = await respuesta.json();
+        if (!respuesta.ok || !json.ok) throw new Error(json.mensaje || `Error del servidor (${respuesta.status})`);
+        if (boton) {
+            const textoOriginal = boton.textContent;
+            boton.textContent = "¡Guardado!";
+            setTimeout(() => { boton.textContent = textoOriginal; }, 1500);
+        }
+    } catch (error) {
+        console.error("Error al calificar entrega:", error);
+        alert(error.message);
+    } finally {
+        if (boton) boton.disabled = false;
+    }
 }
 
 function abrirModalEditarActividad(actividad, idTema) {
