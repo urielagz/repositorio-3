@@ -19,11 +19,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user") || "null");
 
-    // TEMPORAL: sin bloqueo de sesión/rol para poder inspeccionar el HTML
-    // con WAVE u otra auditoría de accesibilidad -- no se espera que las
-    // acciones reales funcionen sin haber iniciado sesión de verdad.
-    usuarioActual = user || { nombre: "Invitado", apellido: "", rol: "admin" };
-    document.getElementById("userDisplay").innerText = `${usuarioActual.nombre} ${usuarioActual.apellido}`;
+    if (!token || !user || user.rol.toLowerCase() !== "admin") {
+        alert("Acceso denegado. Por favor inicia sesión con una cuenta de administrador.");
+        window.location.href = "login.html";
+        return;
+    }
+
+    usuarioActual = user;
+    document.getElementById("userDisplay").innerText = `${user.nombre} ${user.apellido}`;
 
     document.getElementById("btnCerrarSesion").addEventListener("click", cerrarSesion);
 
