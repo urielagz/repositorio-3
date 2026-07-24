@@ -55,16 +55,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user") || "null");
 
-    if (!token || !user || (user.rol.toLowerCase() !== "docente" && user.rol.toLowerCase() !== "admin")) {
-        alert("Acceso denegado. Por favor inicia sesión.");
-        window.location.href = "login.html";
-        return;
-    }
+    // TEMPORAL: sin bloqueo de sesión/rol para poder inspeccionar el HTML
+    // con WAVE u otra auditoría de accesibilidad -- no se espera que las
+    // acciones reales funcionen sin haber iniciado sesión de verdad.
+    usuarioActual = user || { nombre: "Invitado", apellido: "", rol: "docente" };
+    document.getElementById("userDisplay").innerText = `${usuarioActual.nombre} ${usuarioActual.apellido}`;
 
-    usuarioActual = user;
-    document.getElementById("userDisplay").innerText = `${user.nombre} ${user.apellido}`;
-
-    if (user.rol.toLowerCase() === "admin") {
+    if (usuarioActual.rol && usuarioActual.rol.toLowerCase() === "admin") {
         document.getElementById("linkAdmin").classList.remove("hidden");
     }
 
