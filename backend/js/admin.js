@@ -19,8 +19,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user") || "null");
 
-    if (!token || !user || user.rol.toLowerCase() !== "admin") {
-        alert("Acceso denegado. Por favor inicia sesión con una cuenta de administrador.");
+    // Solo exige sesión iniciada, sin importar el rol -- para poder revisar
+    // accesibilidad (WAVE) en este panel con cualquier cuenta de prueba.
+    // El backend sigue exigiendo rol admin para aprobar/rechazar de verdad.
+    if (!token || !user) {
+        alert("Acceso denegado. Por favor inicia sesión.");
         window.location.href = "login.html";
         return;
     }
